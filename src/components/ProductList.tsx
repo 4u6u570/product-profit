@@ -15,11 +15,13 @@ import {
   TrendingUp, 
   Percent 
 } from 'lucide-react';
-import type { Product } from '@/types/product';
+import type { Product, ProductFormData } from '@/types/product';
 
 interface ProductListProps {
   products: Product[];
-  onUpdateProducts: (products: Product[]) => void;
+  onUpdateProduct: (id: string, formData: ProductFormData) => Promise<void>;
+  onDeleteProduct: (id: string) => Promise<void>;
+  onAddProduct?: (formData: ProductFormData) => Promise<void>;
 }
 
 interface EditingState {
@@ -29,7 +31,7 @@ interface EditingState {
   originalValue: string;
 }
 
-export function ProductList({ products, onUpdateProducts }: ProductListProps) {
+export function ProductList({ products, onUpdateProduct, onDeleteProduct, onAddProduct }: ProductListProps) {
   const [editingState, setEditingState] = useState<EditingState | null>(null);
 
   const formatCurrency = (value: number) => {
@@ -53,40 +55,49 @@ export function ProductList({ products, onUpdateProducts }: ProductListProps) {
     });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingState) return;
 
-    const updatedProducts = products.map(product => {
-      if (product.id === editingState.id) {
-        const updatedProduct = { ...product };
-        const numericValue = parseFloat(editingState.value);
-        
-        switch (editingState.field) {
-          case 'nombre':
-          case 'sku':
-          case 'color':
-            (updatedProduct as any)[editingState.field] = editingState.value;
-            break;
-          case 'cantidadPorCaja':
-          case 'precioBase':
-          case 'porcentajeGanancia':
-          case 'comisionMP':
-          case 'porcentajeCupon':
-          case 'comisionCompraLinda':
-          case 'fleteTotal':
-            if (!isNaN(numericValue)) {
-              (updatedProduct as any)[editingState.field] = numericValue;
-              // Recalcular valores
-              return recalculateProduct(updatedProduct);
-            }
-            break;
+    const product = products.find(p => p.id === editingState.id);
+    if (!product) return;
+
+    const updatedProduct = { ...product };
+    const numericValue = parseFloat(editingState.value);
+    
+    switch (editingState.field) {
+      case 'nombre':
+      case 'sku':
+      case 'color':
+        (updatedProduct as any)[editingState.field] = editingState.value;
+        break;
+      case 'cantidadPorCaja':
+      case 'precioBase':
+      case 'porcentajeGanancia':
+      case 'comisionMP':
+      case 'porcentajeCupon':
+      case 'comisionCompraLinda':
+      case 'fleteTotal':
+        if (!isNaN(numericValue)) {
+          (updatedProduct as any)[editingState.field] = numericValue;
         }
-        return updatedProduct;
-      }
-      return product;
+        break;
+    }
+
+    await onUpdateProduct(editingState.id, {
+      nombre: updatedProduct.nombre,
+      sku: updatedProduct.sku,
+      color: updatedProduct.color,
+      cantidadPorCaja: updatedProduct.cantidadPorCaja,
+      tipoPreçioBase: updatedProduct.tipoPreçioBase,
+      precioBase: updatedProduct.precioBase,
+      porcentajeGanancia: updatedProduct.porcentajeGanancia,
+      comisionMP: updatedProduct.comisionMP,
+      porcentajeCupon: updatedProduct.porcentajeCupon,
+      tipoComisionCompraLinda: updatedProduct.tipoComisionCompraLinda,
+      comisionCompraLinda: updatedProduct.comisionCompraLinda,
+      fleteTotal: updatedProduct.fleteTotal
     });
 
-    onUpdateProducts(updatedProducts);
     setEditingState(null);
   };
 
@@ -94,66 +105,27 @@ export function ProductList({ products, onUpdateProducts }: ProductListProps) {
     setEditingState(null);
   };
 
-  const recalculateProduct = (product: Product): Product => {
-    // Recalcular usando la misma lógica del calculador
-    let costoUnitario = 0;
-    
-    switch (product.tipoPreçioBase) {
-      case 'porCaja':
-        costoUnitario = product.precioBase / product.cantidadPorCaja;
-        break;
-      case 'unitarioFijo':
-        costoUnitario = product.precioBase;
-        break;
-      case 'unitarioMargen':
-        costoUnitario = product.precioBase * (1 + product.porcentajeGanancia / 100);
-        break;
-    }
-
-    const fleteUnitario = product.fleteTotal / product.cantidadPorCaja;
-    costoUnitario += fleteUnitario;
-
-    let precioVenta = costoUnitario;
-    
-    if (product.tipoPreçioBase !== 'unitarioMargen') {
-      precioVenta *= (1 + product.porcentajeGanancia / 100);
-    }
-
-    const comisionMPDecimal = product.comisionMP / 100;
-    const cuponDecimal = product.porcentajeCupon / 100;
-    
-    let comisionCL = 0;
-    if (product.tipoComisionCompraLinda === 'porcentaje') {
-      comisionCL = precioVenta * (product.comisionCompraLinda / 100);
-    } else {
-      comisionCL = product.comisionCompraLinda;
-    }
-
-    const precioFinal = (precioVenta + comisionCL) / (1 - comisionMPDecimal - cuponDecimal);
-    const gananciaNeta = precioFinal - costoUnitario - (precioFinal * comisionMPDecimal) - (precioFinal * cuponDecimal) - comisionCL;
-    const margenFinal = (gananciaNeta / precioFinal) * 100;
-
-    return {
-      ...product,
-      costoUnitario,
-      precioVenta: precioFinal,
-      gananciaNeta,
-      margenFinal,
-    };
+  const handleDelete = async (productId: string) => {
+    await onDeleteProduct(productId);
   };
 
-  const handleDelete = (productId: string) => {
-    const updatedProducts = products.filter(product => product.id !== productId);
-    onUpdateProducts(updatedProducts);
-  };
-
-  const handleDuplicate = (product: Product) => {
-    const duplicatedProduct = {
-      ...product,
-      id: Date.now().toString(),
-      nombre: `${product.nombre} (Copia)`,
-    };
-    onUpdateProducts([...products, duplicatedProduct]);
+  const handleDuplicate = async (product: Product) => {
+    if (onAddProduct) {
+      await onAddProduct({
+        nombre: `${product.nombre} (Copia)`,
+        sku: product.sku,
+        color: product.color,
+        cantidadPorCaja: product.cantidadPorCaja,
+        tipoPreçioBase: product.tipoPreçioBase,
+        precioBase: product.precioBase,
+        porcentajeGanancia: product.porcentajeGanancia,
+        comisionMP: product.comisionMP,
+        porcentajeCupon: product.porcentajeCupon,
+        tipoComisionCompraLinda: product.tipoComisionCompraLinda,
+        comisionCompraLinda: product.comisionCompraLinda,
+        fleteTotal: product.fleteTotal
+      });
+    }
   };
 
   const renderEditableField = (product: Product, field: string, value: string | number, type: 'text' | 'number' = 'text') => {
@@ -182,7 +154,7 @@ export function ProductList({ products, onUpdateProducts }: ProductListProps) {
     return (
       <div 
         className="cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors" 
-        onClick={() => handleEdit(product.id, field, value.toString())}
+        onClick={() => handleEdit(product.id, field, value.toString().replace(/[%$,]/g, ''))}
       >
         {value}
       </div>

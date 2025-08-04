@@ -9,9 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Calculator, Plus, Info } from 'lucide-react';
+import { Calculator, Plus, Info, LogOut } from 'lucide-react';
 import type { Product, ProductFormData } from '@/types/product';
 import { ProductList } from './ProductList';
+import { useProducts } from '@/hooks/useProducts';
+import { useAuth } from '@/hooks/useAuth';
 
 const productSchema = z.object({
   nombre: z.string().min(1, 'El nombre del producto es requerido'),
@@ -29,7 +31,8 @@ const productSchema = z.object({
 });
 
 export function ProductCalculator() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const { user, signOut } = useAuth();
+  const { products, addProduct, updateProduct, deleteProduct, loading } = useProducts();
   
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -107,14 +110,9 @@ export function ProductCalculator() {
     };
   };
 
-  const onSubmit = (data: ProductFormData) => {
-    const calculatedProduct = calculateProduct(data);
-    setProducts(prev => [...prev, calculatedProduct]);
+  const onSubmit = async (data: ProductFormData) => {
+    await addProduct(data);
     form.reset();
-  };
-
-  const updateProducts = (updatedProducts: Product[]) => {
-    setProducts(updatedProducts);
   };
 
   return (
@@ -195,12 +193,14 @@ export function ProductCalculator() {
                       name="cantidadPorCaja"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2">
-                            Cantidad por Caja
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <Info className="h-4 w-4 text-muted-foreground" />
-                              </TooltipTrigger>
+                           <FormLabel className="flex items-center gap-2">
+                             Cantidad por Caja
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <div className="cursor-help">
+                                   <Info className="h-4 w-4 text-muted-foreground" />
+                                 </div>
+                               </TooltipTrigger>
                               <TooltipContent>
                                 Cuántas unidades individuales vienen en esta caja/lote
                               </TooltipContent>
@@ -473,8 +473,34 @@ export function ProductCalculator() {
             </CardContent>
           </Card>
 
-          {products.length > 0 && (
-            <ProductList products={products} onUpdateProducts={updateProducts} />
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-semibold">Mis Productos</h2>
+            <Button
+              onClick={signOut}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Cerrar Sesión
+            </Button>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : products.length > 0 ? (
+            <ProductList 
+              products={products} 
+              onUpdateProduct={updateProduct}
+              onDeleteProduct={deleteProduct}
+              onAddProduct={addProduct}
+            />
+          ) : (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No hay productos guardados aún.</p>
+            </Card>
           )}
         </div>
       </div>
