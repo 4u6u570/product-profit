@@ -14,7 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      products: {
+        Row: {
+          cantidad_por_caja: number
+          color: string
+          comision_compra_linda: number
+          comision_mp: number
+          created_at: string
+          flete_total: number
+          id: string
+          nombre: string
+          porcentaje_cupon: number
+          porcentaje_ganancia: number
+          precio_base: number
+          sku: string
+          tipo_comision_compra_linda: string
+          tipo_precio_base: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cantidad_por_caja: number
+          color: string
+          comision_compra_linda: number
+          comision_mp: number
+          created_at?: string
+          flete_total: number
+          id?: string
+          nombre: string
+          porcentaje_cupon: number
+          porcentaje_ganancia: number
+          precio_base: number
+          sku: string
+          tipo_comision_compra_linda: string
+          tipo_precio_base: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cantidad_por_caja?: number
+          color?: string
+          comision_compra_linda?: number
+          comision_mp?: number
+          created_at?: string
+          flete_total?: number
+          id?: string
+          nombre?: string
+          porcentaje_cupon?: number
+          porcentaje_ganancia?: number
+          precio_base?: number
+          sku?: string
+          tipo_comision_compra_linda?: string
+          tipo_precio_base?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
