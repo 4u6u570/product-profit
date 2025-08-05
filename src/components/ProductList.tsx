@@ -16,6 +16,7 @@ import {
   Percent 
 } from 'lucide-react';
 import type { Product, ProductFormData } from '@/types/product';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductListProps {
   products: Product[];
@@ -33,6 +34,7 @@ interface EditingState {
 
 export function ProductList({ products, onUpdateProduct, onDeleteProduct, onAddProduct }: ProductListProps) {
   const [editingState, setEditingState] = useState<EditingState | null>(null);
+  const { toast } = useToast();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-AR', {
@@ -269,7 +271,23 @@ export function ProductList({ products, onUpdateProduct, onDeleteProduct, onAddP
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Precio de venta:</span>
-                        <span className="font-bold text-primary text-base">{formatCurrency(product.precioVenta || 0)}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span 
+                              className="font-bold text-primary text-base cursor-pointer hover:bg-primary/10 px-2 py-1 rounded transition-colors"
+                              onClick={() => {
+                                navigator.clipboard.writeText((product.precioVenta || 0).toString());
+                                toast({
+                                  title: "Copiado",
+                                  description: `Precio ${formatCurrency(product.precioVenta || 0)} copiado al portapapeles`
+                                });
+                              }}
+                            >
+                              {formatCurrency(product.precioVenta || 0)}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>Clic para copiar al portapapeles</TooltipContent>
+                        </Tooltip>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Ganancia neta:</span>
@@ -293,20 +311,22 @@ export function ProductList({ products, onUpdateProduct, onDeleteProduct, onAddP
 
                 {/* Configuración de comisiones */}
                 <div className="mt-2 pt-2 border-t border-border/50">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">% Ganancia:</span>
-                      <span className="font-medium">{renderEditableField(product, 'porcentajeGanancia', `${product.porcentajeGanancia}%`)}</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                    <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                      <span className="text-muted-foreground font-medium">% Ganancia:</span>
+                      <Badge variant="default" className="font-semibold">
+                        {renderEditableField(product, 'porcentajeGanancia', `${product.porcentajeGanancia}%`)}
+                      </Badge>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
                       <span className="text-muted-foreground">% MP:</span>
                       <span className="font-medium">{renderEditableField(product, 'comisionMP', `${product.comisionMP}%`)}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
                       <span className="text-muted-foreground">% Cupón:</span>
                       <span className="font-medium">{renderEditableField(product, 'porcentajeCupon', `${product.porcentajeCupon}%`)}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex items-center justify-between p-2 bg-muted/30 rounded">
                       <span className="text-muted-foreground">Comisión CL:</span>
                       <span className="font-medium">
                         {product.tipoComisionCompraLinda === 'porcentaje' 

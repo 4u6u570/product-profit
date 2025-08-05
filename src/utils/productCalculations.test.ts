@@ -24,20 +24,46 @@ export const calculateProductValues = (data: {
 
   const fleteUnitario = data.fleteTotal / data.cantidadPorCaja;
   const costoConFlete = costoUnitario + fleteUnitario;
-  const precioConMargen = costoConFlete * (1 + data.porcentajeGanancia / 100);
   
-  let comisionCompraLindaUnitaria = 0;
+  // Nueva fórmula: Precio con ganancia deseada
+  const precioConGanancia = costoConFlete * (1 + data.porcentajeGanancia / 100);
+  
+  // Calcular comisiones totales como porcentaje del precio final
+  let comisionCompraLindaPorcentaje = 0;
+  let comisionCompraLindaFija = 0;
+  
   if (data.tipoComisionCompraLinda === 'porcentaje') {
-    comisionCompraLindaUnitaria = precioConMargen * (data.comisionCompraLinda / 100);
+    comisionCompraLindaPorcentaje = data.comisionCompraLinda;
   } else {
-    comisionCompraLindaUnitaria = data.comisionCompraLinda;
+    // Para comisión fija, la convertimos a porcentaje aproximado basado en el precio con ganancia
+    comisionCompraLindaFija = data.comisionCompraLinda;
+    comisionCompraLindaPorcentaje = (comisionCompraLindaFija / precioConGanancia) * 100;
   }
   
-  const precioConComision = precioConMargen + comisionCompraLindaUnitaria;
-  const comisionMP = precioConComision * (data.comisionMP / 100);
-  const cuponDescuento = precioConComision * (data.porcentajeCupon / 100);
-  const precioVenta = precioConComision + comisionMP + cuponDescuento;
-  const gananciaNeta = precioVenta - costoConFlete - comisionCompraLindaUnitaria - comisionMP - cuponDescuento;
+  const comisionesTotalesPorcentaje = data.comisionMP + data.porcentajeCupon + comisionCompraLindaPorcentaje;
+  
+  // Ajustar precio hacia arriba para mantener ganancia neta
+  let precioVenta;
+  if (comisionesTotalesPorcentaje >= 100) {
+    // Prevenir división por cero o números negativos
+    precioVenta = precioConGanancia * 2; // Fallback conservador
+  } else {
+    precioVenta = precioConGanancia / (1 - comisionesTotalesPorcentaje / 100);
+  }
+  
+  // Calcular comisiones reales basadas en el precio final
+  const comisionMP = precioVenta * (data.comisionMP / 100);
+  const cuponDescuento = precioVenta * (data.porcentajeCupon / 100);
+  
+  let comisionCompraLindaReal;
+  if (data.tipoComisionCompraLinda === 'porcentaje') {
+    comisionCompraLindaReal = precioVenta * (data.comisionCompraLinda / 100);
+  } else {
+    comisionCompraLindaReal = data.comisionCompraLinda;
+  }
+  
+  // La ganancia neta debería ser exactamente la configurada
+  const gananciaNeta = precioVenta - costoConFlete - comisionCompraLindaReal - comisionMP - cuponDescuento;
   const margenFinal = (gananciaNeta / precioVenta) * 100;
 
   return {
@@ -71,7 +97,7 @@ describe('Calculadora de Productos - Fórmulas', () => {
       expect(result.costoUnitario).toBe(10);
     });
 
-    test('debe calcular precio de venta final correctamente con todas las comisiones', () => {
+    test('debe calcular precio de venta final correctamente con nueva fórmula', () => {
       const data = {
         cantidadPorCaja: 4,
         tipoPreçioBase: 'porCaja' as const,
@@ -86,17 +112,15 @@ describe('Calculadora de Productos - Fórmulas', () => {
 
       const result = calculateProductValues(data);
       
+      // Nueva fórmula:
       // Costo unitario: 80/4 = 20
       // Flete unitario: 16/4 = 4  
       // Costo con flete: 20 + 4 = 24
-      // Precio con margen: 24 * 1.25 = 30
-      // Comisión CL: 30 * 0.10 = 3
-      // Precio con comisión: 30 + 3 = 33
-      // Comisión MP: 33 * 0.06 = 1.98
-      // Cupón: 33 * 0.08 = 2.64
-      // Precio final: 33 + 1.98 + 2.64 = 37.62
+      // Precio con ganancia: 24 * 1.25 = 30
+      // Comisiones totales: 6% + 8% + 10% = 24%
+      // Precio final: 30 / (1 - 0.24) = 30 / 0.76 = 39.47
       
-      expect(result.precioVenta).toBeCloseTo(37.62, 2);
+      expect(result.precioVenta).toBeCloseTo(39.47, 2);
     });
   });
 
@@ -172,7 +196,38 @@ describe('Calculadora de Productos - Fórmulas', () => {
     });
   });
 
-  describe('Margen Final', () => {
+  describe('Nueva Fórmula - Preservación de Ganancia', () => {
+    test('debe mantener exactamente la ganancia neta configurada después de comisiones', () => {
+      const data = {
+        cantidadPorCaja: 1,
+        tipoPreçioBase: 'unitarioFijo' as const,
+        precioBase: 10000, // $10.000 como en el ejemplo
+        porcentajeGanancia: 100, // 100% como en el ejemplo
+        comisionMP: 10,
+        porcentajeCupon: 0,
+        tipoComisionCompraLinda: 'porcentaje' as const,
+        comisionCompraLinda: 10,
+        fleteTotal: 0
+      };
+
+      const result = calculateProductValues(data);
+      
+      // Ejemplo del usuario:
+      // Precio base: $10.000
+      // % ganancia deseada: 100%
+      // % Mercado Pago: 10%
+      // % Compra Linda: 10%
+      // Ganancia neta esperada: $10.000 (100% sobre el costo)
+      
+      const costoBase = 10000;
+      const gananciaNeta = result.gananciaNeta || 0;
+      const porcentajeGananciaReal = (gananciaNeta / costoBase) * 100;
+      
+      // La ganancia neta debería ser aproximadamente 100% del costo base
+      expect(porcentajeGananciaReal).toBeCloseTo(100, 0);
+      expect(result.precioVenta).toBeCloseTo(25000, 0); // Precio esperado del ejemplo
+    });
+
     test('debe calcular el margen final como porcentaje de ganancia sobre precio de venta', () => {
       const data = {
         cantidadPorCaja: 2,

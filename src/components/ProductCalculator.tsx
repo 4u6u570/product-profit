@@ -72,39 +72,52 @@ export function ProductCalculator() {
 
     // Agregar flete unitario
     const fleteUnitario = data.fleteTotal / data.cantidadPorCaja;
-    costoUnitario += fleteUnitario;
+    const costoConFlete = costoUnitario + fleteUnitario;
 
-    // Calcular precio de venta con márgenes
-    let precioVenta = costoUnitario;
+    // Nueva fórmula: Precio con ganancia deseada
+    const precioConGanancia = costoConFlete * (1 + data.porcentajeGanancia / 100);
     
-    // Aplicar ganancia si no es unitarioMargen
-    if (data.tipoPreçioBase !== 'unitarioMargen') {
-      precioVenta *= (1 + data.porcentajeGanancia / 100);
-    }
-
-    // Aplicar comisiones y descuentos
-    const comisionMPDecimal = data.comisionMP / 100;
-    const cuponDecimal = data.porcentajeCupon / 100;
+    // Calcular comisiones totales como porcentaje del precio final
+    let comisionCompraLindaPorcentaje = 0;
     
-    // Comisión Compra Linda
-    let comisionCL = 0;
     if (data.tipoComisionCompraLinda === 'porcentaje') {
-      comisionCL = precioVenta * (data.comisionCompraLinda / 100);
+      comisionCompraLindaPorcentaje = data.comisionCompraLinda;
     } else {
-      comisionCL = data.comisionCompraLinda;
+      // Para comisión fija, la convertimos a porcentaje aproximado basado en el precio con ganancia
+      comisionCompraLindaPorcentaje = (data.comisionCompraLinda / precioConGanancia) * 100;
     }
-
-    // Precio final considerando todas las comisiones
-    const precioFinal = (precioVenta + comisionCL) / (1 - comisionMPDecimal - cuponDecimal);
     
-    const gananciaNeta = precioFinal - costoUnitario - (precioFinal * comisionMPDecimal) - (precioFinal * cuponDecimal) - comisionCL;
-    const margenFinal = (gananciaNeta / precioFinal) * 100;
+    const comisionesTotalesPorcentaje = data.comisionMP + data.porcentajeCupon + comisionCompraLindaPorcentaje;
+    
+    // Ajustar precio hacia arriba para mantener ganancia neta
+    let precioVenta;
+    if (comisionesTotalesPorcentaje >= 100) {
+      // Prevenir división por cero o números negativos
+      precioVenta = precioConGanancia * 2; // Fallback conservador
+    } else {
+      precioVenta = precioConGanancia / (1 - comisionesTotalesPorcentaje / 100);
+    }
+    
+    // Calcular comisiones reales basadas en el precio final
+    const comisionMP = precioVenta * (data.comisionMP / 100);
+    const cuponDescuento = precioVenta * (data.porcentajeCupon / 100);
+    
+    let comisionCompraLindaReal;
+    if (data.tipoComisionCompraLinda === 'porcentaje') {
+      comisionCompraLindaReal = precioVenta * (data.comisionCompraLinda / 100);
+    } else {
+      comisionCompraLindaReal = data.comisionCompraLinda;
+    }
+    
+    // La ganancia neta debería ser exactamente la configurada
+    const gananciaNeta = precioVenta - costoConFlete - comisionCompraLindaReal - comisionMP - cuponDescuento;
+    const margenFinal = (gananciaNeta / precioVenta) * 100;
 
     return {
       ...data,
       id,
       costoUnitario,
-      precioVenta: precioFinal,
+      precioVenta,
       gananciaNeta,
       margenFinal,
     };
