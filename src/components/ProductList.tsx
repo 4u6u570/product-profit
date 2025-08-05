@@ -292,7 +292,7 @@ export function ProductList({ products, onUpdateProduct, onDeleteProduct, onAddP
                 </div>
 
                 {/* Configuración de comisiones */}
-                <div className="mt-4 pt-4 border-t border-border/50">
+                <div className="mt-2 pt-2 border-t border-border/50">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">% Ganancia:</span>
