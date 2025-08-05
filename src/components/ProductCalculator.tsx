@@ -196,11 +196,11 @@ export function ProductCalculator() {
                            <FormLabel className="flex items-center gap-2">
                              Cantidad por Caja
                              <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <div className="cursor-help">
-                                   <Info className="h-4 w-4 text-muted-foreground" />
-                                 </div>
-                               </TooltipTrigger>
+                              <TooltipTrigger asChild>
+                                <div className="cursor-help inline-flex">
+                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                </div>
+                              </TooltipTrigger>
                               <TooltipContent>
                                 Cuántas unidades individuales vienen en esta caja/lote
                               </TooltipContent>
@@ -228,8 +228,10 @@ export function ProductCalculator() {
                           <FormLabel className="flex items-center gap-2">
                             💰 Precio Base *
                             <Tooltip>
-                              <TooltipTrigger>
-                                <Info className="h-4 w-4 text-muted-foreground" />
+                              <TooltipTrigger asChild>
+                                <div className="cursor-help inline-flex">
+                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                </div>
                               </TooltipTrigger>
                               <TooltipContent>
                                 Precio que pagas por toda la caja o lote completo
@@ -282,8 +284,10 @@ export function ProductCalculator() {
                           <FormLabel className="flex items-center gap-2">
                             % Ganancia
                             <Tooltip>
-                              <TooltipTrigger>
-                                <Info className="h-4 w-4 text-muted-foreground" />
+                              <TooltipTrigger asChild>
+                                <div className="cursor-help inline-flex">
+                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                </div>
                               </TooltipTrigger>
                               <TooltipContent>
                                 Margen de ganancia sobre el costo unitario
@@ -316,8 +320,10 @@ export function ProductCalculator() {
                           <FormLabel className="flex items-center gap-2">
                             % Comisión MP
                             <Tooltip>
-                              <TooltipTrigger>
-                                <Info className="h-4 w-4 text-muted-foreground" />
+                              <TooltipTrigger asChild>
+                                <div className="cursor-help inline-flex">
+                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                </div>
                               </TooltipTrigger>
                               <TooltipContent>
                                 Comisión de la plataforma Mercado Pago
@@ -347,8 +353,10 @@ export function ProductCalculator() {
                           <FormLabel className="flex items-center gap-2">
                             % Cupón
                             <Tooltip>
-                              <TooltipTrigger>
-                                <Info className="h-4 w-4 text-muted-foreground" />
+                              <TooltipTrigger asChild>
+                                <div className="cursor-help inline-flex">
+                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                </div>
                               </TooltipTrigger>
                               <TooltipContent>
                                 Descuento promedio por cupones/promociones
@@ -378,8 +386,10 @@ export function ProductCalculator() {
                           <FormLabel className="flex items-center gap-2">
                             🏪 Comisión Compra Linda
                             <Tooltip>
-                              <TooltipTrigger>
-                                <Info className="h-4 w-4 text-muted-foreground" />
+                              <TooltipTrigger asChild>
+                                <div className="cursor-help inline-flex">
+                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                </div>
                               </TooltipTrigger>
                               <TooltipContent>
                                 Comisión adicional por ventas dropshipping
@@ -434,8 +444,10 @@ export function ProductCalculator() {
                           <FormLabel className="flex items-center gap-2">
                             Flete Total
                             <Tooltip>
-                              <TooltipTrigger>
-                                <Info className="h-4 w-4 text-muted-foreground" />
+                              <TooltipTrigger asChild>
+                                <div className="cursor-help inline-flex">
+                                  <Info className="h-4 w-4 text-muted-foreground" />
+                                </div>
                               </TooltipTrigger>
                               <TooltipContent>
                                 Se divide entre las unidades de cada caja individual
