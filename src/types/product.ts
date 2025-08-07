@@ -1,35 +1,93 @@
 export interface Product {
   id: string;
-  nombre: string;
-  sku: string;
-  color: string;
+  sku?: string;
+  nombre?: string;
+  color?: string;
   cantidadPorCaja: number;
-  tipoPreçioBase: 'porCaja' | 'unitarioFijo' | 'unitarioMargen';
+  tipoPrecio: 'unitario' | 'caja';
   precioBase: number;
-  porcentajeGanancia: number;
-  comisionMP: number;
-  porcentajeCupon: number;
-  tipoComisionCompraLinda: 'porcentaje' | 'precioFijo';
-  comisionCompraLinda: number;
   fleteTotal: number;
-  // Campos calculados
-  costoUnitario?: number;
-  precioVenta?: number;
-  gananciaNeta?: number;
-  margenFinal?: number;
+  absorboEnvio: boolean;
+  costoEnvioUnitario?: number;
+  modoProducto: 'propio' | 'tercero';
+  pctGanancia: number;
+  pctMP: number;
+  pctCupon: number;
+  clTipo: 'porcentaje' | 'fijo';
+  pctCL?: number;
+  clFijo?: number;
+  pctMarketplace?: number;
+  pctDescTransfer: number;
+  reglaRedondeo: 'none' | '10' | '50' | '100' | 'psico';
+  
+  // Resultados calculados
+  costos: {
+    costoUnitario: number;
+    fleteUnitario: number;
+  };
+  webMP: {
+    precio: number;
+    gananciaNeta: number;
+    margenPct: number;
+  };
+  webTransfer: {
+    precio: number;
+    gananciaNeta: number;
+    margenPct: number;
+  };
+  marketplace?: {
+    precio: number;
+    gananciaNeta: number;
+    margenPct: number;
+  };
+  
+  // Metadatos
+  createdAt: string;
+  updatedAt: string;
+  pinned?: boolean;
+  selected?: boolean;
 }
 
 export interface ProductFormData {
-  nombre: string;
-  sku: string;
-  color: string;
+  sku?: string;
+  nombre?: string;
+  color?: string;
   cantidadPorCaja: number;
-  tipoPreçioBase: 'porCaja' | 'unitarioFijo' | 'unitarioMargen';
+  tipoPrecio: 'unitario' | 'caja';
   precioBase: number;
-  porcentajeGanancia: number;
-  comisionMP: number;
-  porcentajeCupon: number;
-  tipoComisionCompraLinda: 'porcentaje' | 'precioFijo';
-  comisionCompraLinda: number;
   fleteTotal: number;
+  absorboEnvio: boolean;
+  costoEnvioUnitario?: number;
+  modoProducto: 'propio' | 'tercero';
+  pctGanancia: number;
+  pctMP: number;
+  pctCupon: number;
+  clTipo: 'porcentaje' | 'fijo';
+  pctCL?: number;
+  clFijo?: number;
+  pctMarketplace?: number;
+  pctDescTransfer: number;
+  reglaRedondeo: 'none' | '10' | '50' | '100' | 'psico';
+}
+
+export interface ProductCalculationResult {
+  costos: {
+    costoUnitario: number;
+    fleteUnitario: number;
+  };
+  webMP: {
+    precio: number;
+    gananciaNeta: number;
+    margenPct: number;
+  };
+  webTransfer: {
+    precio: number;
+    gananciaNeta: number;
+    margenPct: number;
+  };
+  marketplace?: {
+    precio: number;
+    gananciaNeta: number;
+    margenPct: number;
+  };
 }
