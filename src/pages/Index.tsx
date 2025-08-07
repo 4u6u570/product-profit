@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ProductCalculator } from '@/components/ProductCalculator';
+import { PriceCalculator } from '@/components/PriceCalculator';
 import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
@@ -25,7 +25,7 @@ const Index = () => {
     return null;
   }
 
-  return <ProductCalculator />;
+  return <PriceCalculator />;
 };
 
 export default Index;
