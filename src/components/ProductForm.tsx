@@ -14,7 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ProductFormData, ProductCalculationResult, Product } from '@/types/product';
 import { calculateProduct, validateProductData } from '@/utils/productCalculations';
 import { formatCurrency, formatNumber } from '@/utils/formatting';
-import { useProducts } from '@/contexts/ProductsContext';
+import { useProductStore } from '@/hooks/useProductStore';
+import { useAuth } from '@/hooks/useAuth';
 
 const formSchema = z.object({
   sku: z.string().optional(),
@@ -40,7 +41,8 @@ const formSchema = z.object({
 
 export function ProductForm() {
   const { toast } = useToast();
-  const { addProduct } = useProducts();
+  const { user } = useAuth();
+  const { addProduct } = useProductStore();
   const [preview, setPreview] = useState<ProductCalculationResult | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -93,25 +95,23 @@ export function ProductForm() {
     });
   };
 
-  const handleAddToList = () => {
-    if (!preview) return;
+  const handleAddToList = async () => {
+    if (!preview || !user) return;
 
-    const newProduct: Product = {
-      id: crypto.randomUUID(),
-      ...watchedValues,
-      ...preview,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      selected: false,
-      pinned: false,
-    };
-
-    addProduct(newProduct);
-    
-    toast({
-      title: "Producto agregado",
-      description: "Producto agregado a la lista exitosamente",
-    });
+    try {
+      await addProduct(watchedValues, user.id);
+      
+      toast({
+        title: "Producto agregado",
+        description: "Producto agregado a la lista exitosamente",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo agregar el producto",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
