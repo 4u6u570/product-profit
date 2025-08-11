@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      grupo_miembros: {
+        Row: {
+          created_at: string | null
+          grupo_id: string
+          rol: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          grupo_id: string
+          rol?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          grupo_id?: string
+          rol?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupo_miembros_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grupos: {
+        Row: {
+          created_at: string | null
+          id: string
+          nombre: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nombre: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           cantidad_por_caja: number
@@ -22,6 +69,7 @@ export type Database = {
           comision_mp: number
           created_at: string
           flete_total: number
+          grupo_id: string | null
           id: string
           nombre: string
           porcentaje_cupon: number
@@ -40,6 +88,7 @@ export type Database = {
           comision_mp: number
           created_at?: string
           flete_total: number
+          grupo_id?: string | null
           id?: string
           nombre: string
           porcentaje_cupon: number
@@ -58,6 +107,7 @@ export type Database = {
           comision_mp?: number
           created_at?: string
           flete_total?: number
+          grupo_id?: string | null
           id?: string
           nombre?: string
           porcentaje_cupon?: number
@@ -69,7 +119,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -106,7 +164,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      ensure_user_in_default_group: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_user_group: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
