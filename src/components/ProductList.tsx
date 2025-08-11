@@ -23,7 +23,8 @@ import { Product } from '@/types/product';
 import { useProductStore } from '@/hooks/useProductStore';
 import { formatCurrency, formatForCopy } from '@/utils/formatting';
 import { exportToCSV, exportToExcel, prepareExportData } from '@/utils/export';
-import { useAuth } from '@/hooks/useAuth';
+import { exportCompactCSV, exportCompactXLSX, prepareCompactExportData } from '@/utils/exporters';
+import { useGroup } from '@/hooks/useGroup';
 
 interface InlineEditState {
   productId: string;
@@ -32,7 +33,7 @@ interface InlineEditState {
 }
 
 export function ProductList() {
-  const { user } = useAuth();
+  const { groupId } = useGroup();
   const { 
     products, 
     updateProduct, 
@@ -48,10 +49,10 @@ export function ProductList() {
   const [inlineEdit, setInlineEdit] = useState<InlineEditState | null>(null);
 
   useEffect(() => {
-    if (user) {
-      loadProducts(user.id);
+    if (groupId) {
+      loadProducts(groupId);
     }
-  }, [user, loadProducts]);
+  }, [groupId, loadProducts]);
 
   const handleCopyPrice = async (price: number) => {
     try {
@@ -142,13 +143,13 @@ export function ProductList() {
       return;
     }
 
-    const exportData = prepareExportData(dataToExport);
+    const exportData = prepareCompactExportData(dataToExport);
     const filename = `productos-${new Date().toISOString().split('T')[0]}`;
 
     if (type === 'csv') {
-      exportToCSV(exportData, filename);
+      exportCompactCSV(exportData, filename);
     } else {
-      exportToExcel(exportData, filename);
+      exportCompactXLSX(exportData, filename);
     }
 
     toast({

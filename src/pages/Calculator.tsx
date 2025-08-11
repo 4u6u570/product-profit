@@ -3,17 +3,25 @@ import { Calculator, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useProductStore } from '@/hooks/useProductStore';
+import { useGroup } from '@/hooks/useGroup';
 import { ProductForm } from '@/components/ProductForm';
 import { ProductList } from '@/components/ProductList';
 
 export default function CalculatorPage() {
   const { user, signOut } = useAuth();
-  const { loadFromLocalStorage } = useProductStore();
+  const { groupId, loading: groupLoading } = useGroup();
+  const { loadFromLocalStorage, loadProducts } = useProductStore();
 
   useEffect(() => {
     // Load initial data from localStorage
     loadFromLocalStorage();
   }, [loadFromLocalStorage]);
+
+  useEffect(() => {
+    if (groupId && !groupLoading) {
+      loadProducts(groupId);
+    }
+  }, [groupId, groupLoading, loadProducts]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/50 p-4">

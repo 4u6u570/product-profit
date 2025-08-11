@@ -17,8 +17,8 @@ interface ProductStore {
   unsyncedQueue: UnsyncedChange[];
   
   // Actions
-  loadProducts: (userId: string) => Promise<void>;
-  addProduct: (formData: ProductFormData, userId: string) => Promise<void>;
+  loadProducts: (groupId: string) => Promise<void>;
+  addProduct: (formData: ProductFormData, groupId: string) => Promise<void>;
   updateProduct: (id: string, formData: Partial<ProductFormData>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   togglePin: (id: string) => void;
@@ -27,7 +27,7 @@ interface ProductStore {
   deselectAll: () => void;
   getSelectedProducts: () => Product[];
   clearAll: () => void;
-  syncToSupabase: (userId: string) => Promise<void>;
+  syncToSupabase: (groupId: string) => Promise<void>;
   
   // Local storage
   saveToLocalStorage: () => void;
@@ -71,7 +71,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     }
   },
 
-  loadProducts: async (userId: string) => {
+  loadProducts: async (groupId: string) => {
     set({ loading: true });
     
     // Load from localStorage first for immediate render
@@ -82,7 +82,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('user_id', userId)
+        .eq('grupo_id', groupId)
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -152,7 +152,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       get().saveToLocalStorage();
 
       // Sync any unsynced changes
-      await get().syncToSupabase(userId);
+      await get().syncToSupabase(groupId);
       
     } catch (error) {
       console.error('Error loading products:', error);
@@ -160,7 +160,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     }
   },
 
-  addProduct: async (formData: ProductFormData, userId: string) => {
+  addProduct: async (formData: ProductFormData, groupId: string) => {
     const newProduct: Product = {
       id: crypto.randomUUID(),
       ...formData,
@@ -184,7 +184,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
 
     // Try to sync to Supabase
     try {
-      await get().syncToSupabase(userId);
+      await get().syncToSupabase(groupId);
     } catch (error) {
       console.error('Error syncing new product:', error);
     }
@@ -294,7 +294,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     get().saveToLocalStorage();
   },
 
-  syncToSupabase: async (userId: string) => {
+  syncToSupabase: async (groupId: string) => {
     const { unsyncedQueue } = get();
     if (unsyncedQueue.length === 0) return;
 
@@ -303,7 +303,8 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         if (change.type === 'create' && change.data) {
           const product = change.data as Product;
           await supabase.from('products').insert({
-            user_id: userId,
+            user_id: 'placeholder', // Will be replaced by trigger/function
+            grupo_id: groupId,
             sku: product.sku || '',
             nombre: product.nombre || '',
             color: product.color || '',
@@ -316,7 +317,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
             porcentaje_cupon: product.pctCupon,
             tipo_comision_compra_linda: product.clTipo === 'porcentaje' ? 'porcentaje' : 'precioFijo',
             comision_compra_linda: product.clTipo === 'porcentaje' ? (product.pctCL || 0) : (product.clFijo || 0)
-          });
+          } as any);
         } else if (change.type === 'update') {
           // Map the update data to database schema
           const updateData: any = {};
@@ -333,15 +334,13 @@ export const useProductStore = create<ProductStore>((set, get) => ({
           
           await supabase
             .from('products')
-            .update({ ...updateData, updated_at: new Date().toISOString() })
-            .eq('id', change.id)
-            .eq('user_id', userId);
+            .update({ ...updateData, updated_at: new Date().toISOString() } as any)
+            .eq('id', change.id);
         } else if (change.type === 'delete') {
           await supabase
             .from('products')
             .delete()
-            .eq('id', change.id)
-            .eq('user_id', userId);
+            .eq('id', change.id);
         }
       }
 

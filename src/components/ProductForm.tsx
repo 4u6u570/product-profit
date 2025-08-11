@@ -15,7 +15,7 @@ import { ProductFormData, ProductCalculationResult, Product } from '@/types/prod
 import { calculateProduct, validateProductData } from '@/utils/productCalculations';
 import { formatCurrency, formatNumber } from '@/utils/formatting';
 import { useProductStore } from '@/hooks/useProductStore';
-import { useAuth } from '@/hooks/useAuth';
+import { useGroup } from '@/hooks/useGroup';
 
 const formSchema = z.object({
   sku: z.string().optional(),
@@ -41,7 +41,7 @@ const formSchema = z.object({
 
 export function ProductForm() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { groupId } = useGroup();
   const { addProduct } = useProductStore();
   const [preview, setPreview] = useState<ProductCalculationResult | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -96,10 +96,10 @@ export function ProductForm() {
   };
 
   const handleAddToList = async () => {
-    if (!preview || !user) return;
+    if (!preview || !groupId) return;
 
     try {
-      await addProduct(watchedValues, user.id);
+      await addProduct(watchedValues, groupId);
       
       toast({
         title: "Producto agregado",
