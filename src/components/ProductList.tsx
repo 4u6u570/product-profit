@@ -343,34 +343,34 @@ export function ProductList() {
                     <div>
                       <p className="text-muted-foreground">Web MP</p>
                       <button
-                        onClick={() => handleCopyPrice(product.webMP.precio)}
+                        onClick={() => product.webMP?.precio && handleCopyPrice(product.webMP.precio)}
                         className="font-semibold hover:text-primary cursor-pointer flex items-center gap-1"
                       >
-                        {formatCurrency(product.webMP.precio)}
+                        {product.webMP?.precio ? formatCurrency(product.webMP.precio) : 'N/A'}
                         <Copy className="h-3 w-3" />
                       </button>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Web Transfer</p>
                       <button
-                        onClick={() => handleCopyPrice(product.webTransfer.precio)}
+                        onClick={() => product.webTransfer?.precio && handleCopyPrice(product.webTransfer.precio)}
                         className="font-semibold hover:text-primary cursor-pointer flex items-center gap-1"
                       >
-                        {formatCurrency(product.webTransfer.precio)}
+                        {product.webTransfer?.precio ? formatCurrency(product.webTransfer.precio) : 'N/A'}
                         <Copy className="h-3 w-3" />
                       </button>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Web Cupón</p>
                       <button
-                        onClick={() => handleCopyPrice(product.webCupon.precio)}
+                        onClick={() => product.webCupon?.precio && handleCopyPrice(product.webCupon.precio)}
                         className="font-semibold hover:text-primary cursor-pointer flex items-center gap-1"
                       >
-                        {formatCurrency(product.webCupon.precio)}
+                        {product.webCupon?.precio ? formatCurrency(product.webCupon.precio) : 'N/A'}
                         <Copy className="h-3 w-3" />
                       </button>
                     </div>
-                    {product.marketplace && (
+                    {product.marketplace?.precio && (
                       <div className="col-span-3">
                         <p className="text-muted-foreground">Marketplace</p>
                         <button
