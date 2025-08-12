@@ -107,7 +107,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
           clTipo: row.tipo_comision_compra_linda === 'porcentaje' ? 'porcentaje' : 'fijo',
           pctCL: row.tipo_comision_compra_linda === 'porcentaje' ? Number(row.comision_compra_linda) : undefined,
           clFijo: row.tipo_comision_compra_linda === 'precioFijo' ? Number(row.comision_compra_linda) : undefined,
-          pctMarketplace: undefined,
+          pctIVA: undefined,
           pctDescTransfer: 10, // Default value
           reglaRedondeo: 'none'
         };
@@ -219,7 +219,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
               clTipo: updatedProduct.clTipo,
               pctCL: updatedProduct.pctCL,
               clFijo: updatedProduct.clFijo,
-              pctMarketplace: updatedProduct.pctMarketplace,
+              pctIVA: updatedProduct.pctIVA,
               pctDescTransfer: updatedProduct.pctDescTransfer,
               reglaRedondeo: updatedProduct.reglaRedondeo
             };

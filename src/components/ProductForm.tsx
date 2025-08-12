@@ -34,7 +34,7 @@ const formSchema = z.object({
   clTipo: z.enum(['porcentaje', 'fijo']),
   pctCL: z.number().min(0).max(100, 'El porcentaje de CL debe estar entre 0 y 100%').optional(),
   clFijo: z.number().min(0, 'La comisión fija debe ser mayor o igual a 0').optional(),
-  pctMarketplace: z.number().min(0).max(100, 'El porcentaje de marketplace debe estar entre 0 y 100%').optional(),
+  pctIVA: z.number().min(0).max(100, 'El porcentaje de IVA debe estar entre 0 y 100%').optional(),
   pctDescTransfer: z.number().min(0).max(100, 'El descuento debe estar entre 0 y 100%'),
   reglaRedondeo: z.enum(['none', '10', '50', '100', 'psico']),
 });
@@ -65,7 +65,7 @@ export function ProductForm() {
       clTipo: 'porcentaje',
       pctCL: 0,
       clFijo: 0,
-      pctMarketplace: 0,
+      pctIVA: 0,
       pctDescTransfer: 10,
       reglaRedondeo: 'none',
     },
@@ -96,7 +96,23 @@ export function ProductForm() {
   };
 
   const handleAddToList = async () => {
-    if (!preview || !groupId) return;
+    if (!preview) {
+      toast({
+        title: "Error",
+        description: "No hay vista previa disponible",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!groupId) {
+      toast({
+        title: "Error",
+        description: "No se pudo obtener el grupo del usuario",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       await addProduct(watchedValues, groupId);
@@ -105,10 +121,14 @@ export function ProductForm() {
         title: "Producto agregado",
         description: "Producto agregado a la lista exitosamente",
       });
+      
+      // Reset form after successful addition
+      form.reset();
     } catch (error) {
+      console.error('Error adding product:', error);
       toast({
         title: "Error",
-        description: "No se pudo agregar el producto",
+        description: `No se pudo agregar el producto: ${error instanceof Error ? error.message : 'Error desconocido'}`,
         variant: "destructive",
       });
     }
@@ -307,7 +327,7 @@ export function ProductForm() {
               type="number"
               step="0.01"
               placeholder="21 (personalizable)"
-              {...form.register('pctMarketplace', { valueAsNumber: true })}
+              {...form.register('pctIVA', { valueAsNumber: true })}
             />
           </div>
           <div>
@@ -347,7 +367,7 @@ export function ProductForm() {
         {preview && !validationError && (
           <div className="p-4 bg-muted/50 rounded-lg space-y-3">
             <h4 className="font-semibold text-sm">Vista Previa</h4>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Costo Unitario</p>
                 <p className="font-semibold">{formatCurrency(preview.costos.costoUnitario)}</p>
@@ -364,12 +384,6 @@ export function ProductForm() {
                 <p className="text-muted-foreground">Web Cupón</p>
                 <p className="font-semibold">{formatCurrency(preview.webCupon.precio)}</p>
               </div>
-              {preview.marketplace && (
-                <div>
-                  <p className="text-muted-foreground">Marketplace</p>
-                  <p className="font-semibold">{formatCurrency(preview.marketplace.precio)}</p>
-                </div>
-              )}
             </div>
           </div>
         )}

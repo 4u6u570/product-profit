@@ -16,7 +16,7 @@ export interface Product {
   clTipo: 'porcentaje' | 'fijo';
   pctCL?: number;
   clFijo?: number;
-  pctMarketplace?: number;
+  pctIVA?: number;
   pctDescTransfer: number;
   reglaRedondeo: 'none' | '10' | '50' | '100' | 'psico';
   
@@ -70,7 +70,7 @@ export interface ProductFormData {
   clTipo: 'porcentaje' | 'fijo';
   pctCL?: number;
   clFijo?: number;
-  pctMarketplace?: number;
+  pctIVA?: number;
   pctDescTransfer: number;
   reglaRedondeo: 'none' | '10' | '50' | '100' | 'psico';
 }

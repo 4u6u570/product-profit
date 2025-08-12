@@ -33,9 +33,10 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
   // 2. Calcular flete unitario
   const fleteUnitario = data.fleteTotal / data.cantidadPorCaja;
 
-  // 3. Calcular costo unitario total
+  // 3. Calcular costo unitario total (incluye IVA si está configurado)
   const costoEnvio = data.absorboEnvio ? (data.costoEnvioUnitario || 0) : 0;
-  const costoUnitario = costoUnitarioBase + fleteUnitario + costoEnvio;
+  const costoIVA = (data.pctIVA || 0) > 0 ? costoUnitarioBase * ((data.pctIVA || 0) / 100) : 0;
+  const costoUnitario = costoUnitarioBase + fleteUnitario + costoEnvio + costoIVA;
 
   // 4. Calcular ganancia deseada y subtotal
   const gananciaDeseada = costoUnitario * (data.pctGanancia / 100);
@@ -80,25 +81,8 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
     data.reglaRedondeo
   );
 
-  // 8. Calcular precio Marketplace (si aplica)
-  let marketplace: { precio: number; gananciaNeta: number; margenPct: number } | undefined;
-  
-  if (data.pctMarketplace && data.pctMarketplace > 0) {
-    const tMarket = data.pctMarketplace / 100;
-    const tCup = data.pctCupon / 100;
-    
-    const precioMarketplaceBruto = subtotal / (1 - tMarket - tCup);
-    const precioMarketplace = applyRounding(precioMarketplaceBruto, data.reglaRedondeo);
-    
-    const gananciaNetaMarketplace = precioMarketplace * (1 - tMarket - tCup) - costoUnitario;
-    const margenPctMarketplace = precioMarketplace > 0 ? (gananciaNetaMarketplace / precioMarketplace) * 100 : 0;
-    
-    marketplace = {
-      precio: precioMarketplace,
-      gananciaNeta: gananciaNetaMarketplace,
-      margenPct: margenPctMarketplace,
-    };
-  }
+  // 8. Sin marketplace - IVA ya está incluido en el costo unitario
+  const marketplace = undefined;
 
   // 9. Recalcular ganancias y márgenes con precios redondeados
   const calcularGananciaNeta = (precio: number, esTransferencia: boolean = false): { gananciaNeta: number; margenPct: number } => {
