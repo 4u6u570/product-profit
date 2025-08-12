@@ -178,8 +178,8 @@ export function ProductList() {
       (product.nombre || '').toLowerCase().includes(term) ||
       (product.sku || '').toLowerCase().includes(term) ||
       (product.color || '').toLowerCase().includes(term) ||
-      product.webMP.precio.toString().includes(term) ||
-      product.webTransfer.precio.toString().includes(term)
+      (product.webMP?.precio?.toString() || '').includes(term) ||
+      (product.webTransfer?.precio?.toString() || '').includes(term)
     );
   }, [products, searchTerm]);
 
