@@ -299,11 +299,16 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     if (unsyncedQueue.length === 0) return;
 
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuario no autenticado');
+
       for (const change of unsyncedQueue) {
         if (change.type === 'create' && change.data) {
           const product = change.data as Product;
           await supabase.from('products').insert({
-            user_id: 'placeholder', // Will be replaced by trigger/function
+            id: product.id,
+            user_id: user.id,
             grupo_id: groupId,
             sku: product.sku || '',
             nombre: product.nombre || '',

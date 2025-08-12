@@ -35,6 +35,11 @@ export interface Product {
     gananciaNeta: number;
     margenPct: number;
   };
+  webCupon: {
+    precio: number;
+    gananciaNeta: number;
+    margenPct: number;
+  };
   marketplace?: {
     precio: number;
     gananciaNeta: number;
@@ -81,6 +86,11 @@ export interface ProductCalculationResult {
     margenPct: number;
   };
   webTransfer: {
+    precio: number;
+    gananciaNeta: number;
+    margenPct: number;
+  };
+  webCupon: {
     precio: number;
     gananciaNeta: number;
     margenPct: number;

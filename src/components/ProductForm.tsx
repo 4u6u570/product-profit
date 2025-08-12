@@ -301,12 +301,12 @@ export function ProductForm() {
         {/* Configuración Adicional */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="pctMarketplace">% Marketplace</Label>
+            <Label htmlFor="pctIVA">% IVA sobre Costo</Label>
             <Input
-              id="pctMarketplace"
+              id="pctIVA"
               type="number"
               step="0.01"
-              placeholder="0 = No usar"
+              placeholder="21 (personalizable)"
               {...form.register('pctMarketplace', { valueAsNumber: true })}
             />
           </div>
@@ -347,7 +347,7 @@ export function ProductForm() {
         {preview && !validationError && (
           <div className="p-4 bg-muted/50 rounded-lg space-y-3">
             <h4 className="font-semibold text-sm">Vista Previa</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Costo Unitario</p>
                 <p className="font-semibold">{formatCurrency(preview.costos.costoUnitario)}</p>
@@ -359,6 +359,10 @@ export function ProductForm() {
               <div>
                 <p className="text-muted-foreground">Web Transfer</p>
                 <p className="font-semibold">{formatCurrency(preview.webTransfer.precio)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Web Cupón</p>
+                <p className="font-semibold">{formatCurrency(preview.webCupon.precio)}</p>
               </div>
               {preview.marketplace && (
                 <div>
