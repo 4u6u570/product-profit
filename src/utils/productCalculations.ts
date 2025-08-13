@@ -11,8 +11,18 @@ export function applyRounding(price: number, rule: 'none' | '10' | '50' | '100' 
     case '100':
       return Math.round(price / 100) * 100;
     case 'psico': {
-      const integer = Math.floor(price);
-      return integer + 0.99;
+      // Obtener la parte entera hasta las centenas
+      const hundreds = Math.floor(price / 100) * 100;
+      const remainder = price - hundreds;
+      
+      // Si está entre 0-49.99, baja a X99 del bloque anterior
+      if (remainder < 50) {
+        return hundreds - 1;
+      }
+      // Si está entre 50-99.99, sube a X99 del mismo bloque
+      else {
+        return hundreds + 99;
+      }
     }
     default:
       return price;
