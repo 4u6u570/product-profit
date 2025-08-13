@@ -12,12 +12,7 @@ export function applyRounding(price: number, rule: 'none' | '10' | '50' | '100' 
       return Math.round(price / 100) * 100;
     case 'psico': {
       const integer = Math.floor(price);
-      const decimal = price - integer;
-      if (decimal <= 0.90) {
-        return integer + 0.90;
-      } else {
-        return integer + 0.99;
-      }
+      return integer + 0.99;
     }
     default:
       return price;

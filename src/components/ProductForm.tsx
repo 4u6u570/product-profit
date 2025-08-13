@@ -19,11 +19,11 @@ import { useGroup } from '@/hooks/useGroup';
 
 const formSchema = z.object({
   sku: z.string().optional(),
-  nombre: z.string().optional(),
+  nombre: z.string().min(1, 'El nombre es obligatorio'),
   color: z.string().optional(),
   cantidadPorCaja: z.number().min(1, 'La cantidad debe ser mayor a 0'),
   tipoPrecio: z.enum(['unitario', 'caja']),
-  precioBase: z.number().min(0, 'El precio base debe ser mayor o igual a 0'),
+  precioBase: z.number().min(0.01, 'El precio base es obligatorio y debe ser mayor a 0'),
   fleteTotal: z.number().min(0, 'El flete total debe ser mayor o igual a 0'),
   costoEnvioUnitario: z.number().min(0, 'El costo de envío debe ser mayor o igual a 0').optional(),
   absorboEnvio: z.boolean(),
