@@ -373,10 +373,10 @@ export function ProductList() {
                       </button>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Web Cupón</p>
+                      <p className="text-[hsl(var(--emerald-final))]">Web Final</p>
                       <button
                         onClick={() => product.webCupon?.precio && handleCopyPrice(product.webCupon.precio)}
-                        className="font-semibold hover:text-primary cursor-pointer flex items-center gap-1"
+                        className="font-semibold text-[hsl(var(--emerald-final))] hover:opacity-80 cursor-pointer flex items-center gap-1"
                       >
                         {product.webCupon?.precio ? formatCurrency(product.webCupon.precio) : 'N/A'}
                         <Copy className="h-3 w-3" />

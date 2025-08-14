@@ -381,8 +381,8 @@ export function ProductForm() {
                 <p className="font-semibold">{formatCurrency(preview.webTransfer.precio)}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Web Cupón</p>
-                <p className="font-semibold">{formatCurrency(preview.webCupon.precio)}</p>
+                <p className="text-[hsl(var(--emerald-final))]">Web Final</p>
+                <p className="font-semibold text-[hsl(var(--emerald-final))]">{formatCurrency(preview.webCupon.precio)}</p>
               </div>
             </div>
           </div>
