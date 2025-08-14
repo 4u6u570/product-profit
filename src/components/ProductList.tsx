@@ -338,6 +338,18 @@ export function ProductList() {
                     </DropdownMenu>
                   </div>
                   
+                  {/* Precio Base de Referencia */}
+                  <div className="mb-3 p-2 bg-muted/30 rounded-md">
+                    <p className="text-muted-foreground text-xs mb-1">Precio Base de Referencia</p>
+                    <button
+                      onClick={() => handleCopyPrice(product.precioBase)}
+                      className="text-sm font-medium hover:text-primary cursor-pointer flex items-center gap-1"
+                    >
+                      {formatCurrency(product.precioBase)}
+                      <Copy className="h-3 w-3" />
+                    </button>
+                  </div>
+
                   {/* Precios principales */}
                   <div className="grid grid-cols-3 gap-4 text-sm mb-4">
                     <div>
