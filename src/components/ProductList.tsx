@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Copy, 
   Trash2, 
@@ -16,9 +17,12 @@ import {
   MoreHorizontal,
   FileDown,
   Search,
+  ChevronDown,
+  Loader2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 import { Product } from '@/types/product';
 import { useProductStore } from '@/hooks/useProductStore';
@@ -47,8 +51,15 @@ export function ProductList() {
     loadProducts 
   } = useProductStore();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [inlineEdit, setInlineEdit] = useState<InlineEditState | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Estados para lazy loading
+  const [displayCount, setDisplayCount] = useState(10);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  
+  const ITEMS_PER_LOAD = 10;
 
   useEffect(() => {
     if (groupId) {
@@ -183,27 +194,58 @@ export function ProductList() {
     );
   }, [products, searchTerm]);
 
+  // Productos a mostrar con lazy loading
+  const displayedProducts = useMemo(() => {
+    return filteredProducts.slice(0, displayCount);
+  }, [filteredProducts, displayCount]);
+
+  const hasMoreProducts = filteredProducts.length > displayCount;
+
+  // Función para cargar más productos
+  const loadMoreProducts = useCallback(() => {
+    setIsLoadingMore(true);
+    
+    // Simular un delay para mostrar el loading
+    setTimeout(() => {
+      setDisplayCount(prev => prev + ITEMS_PER_LOAD);
+      setIsLoadingMore(false);
+    }, 300);
+  }, [ITEMS_PER_LOAD]);
+
+  // Resetear displayCount cuando cambie el término de búsqueda
+  useEffect(() => {
+    setDisplayCount(ITEMS_PER_LOAD);
+  }, [searchTerm, ITEMS_PER_LOAD]);
+
   const selectedCount = getSelectedProducts().length;
 
   return (
     <Card className="h-fit shadow-lg border-0 bg-gradient-to-br from-card to-muted/20">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl">Lista de Productos ({filteredProducts.length})</CardTitle>
+      <CardHeader className="pb-4 md:pb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <CardTitle className="text-xl md:text-2xl">Lista de Productos ({filteredProducts.length})</CardTitle>
+            {displayedProducts.length !== filteredProducts.length && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Mostrando {displayedProducts.length} de {filteredProducts.length} productos
+              </p>
+            )}
+          </div>
           
           {products.length > 0 && (
-            <div className="flex gap-2">
+            <div className="flex flex-col md:flex-row gap-2">
               <Button
                 variant="outline"
-                size="sm"
+                size={isMobile ? "default" : "sm"}
                 onClick={selectedCount > 0 ? deselectAll : selectAll}
+                className="w-full md:w-auto"
               >
                 {selectedCount > 0 ? 'Deseleccionar' : 'Seleccionar'} todo
               </Button>
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size={isMobile ? "default" : "sm"} className="w-full md:w-auto">
                     <FileDown className="h-4 w-4 mr-2" />
                     Exportar
                   </Button>
@@ -239,20 +281,20 @@ export function ProductList() {
               placeholder="Buscar por nombre, SKU, color o precio..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className={`pl-10 ${isMobile ? 'h-12 text-base' : 'h-10 text-sm'}`}
             />
           </div>
         )}
       </CardHeader>
       
-      <CardContent className="space-y-4 max-h-[800px] overflow-y-auto">
+      <CardContent className={`space-y-4 ${isMobile ? 'max-h-none' : 'max-h-[800px] overflow-y-auto'}`}>
         {filteredProducts.length === 0 ? (
           searchTerm ? (
             <div className="text-center py-8 text-muted-foreground">
               <p>No se encontraron productos que coincidan con "{searchTerm}"</p>
               <Button 
                 variant="outline" 
-                size="sm" 
+                size={isMobile ? "default" : "sm"} 
                 onClick={() => setSearchTerm('')}
                 className="mt-2"
               >
@@ -262,12 +304,13 @@ export function ProductList() {
           ) : (
           <div className="text-center py-8 text-muted-foreground">
             <p>No hay productos en la lista</p>
-            <p className="text-sm">Agrega productos desde el formulario de la izquierda</p>
+            <p className="text-sm">Agrega productos desde el formulario de {isMobile ? 'arriba' : 'la izquierda'}</p>
           </div>
           )
         ) : (
-          <div className="grid gap-3">
-            {filteredProducts.map((product) => (
+          <>
+            <div className="grid gap-3">
+              {displayedProducts.map((product) => (
               <Card key={product.id} className={`shadow-sm border transition-all ${product.pinned ? 'border-primary bg-primary/5' : ''}`}>
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
@@ -351,46 +394,46 @@ export function ProductList() {
                   </div>
 
                   {/* Precios principales */}
-                  <div className="grid grid-cols-3 gap-4 text-sm mb-4">
-                    <div>
-                      <p className="text-muted-foreground">Web MP</p>
+                  <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-3 gap-4'} text-sm mb-4`}>
+                    <div className={isMobile ? 'p-3 bg-background/50 rounded-md' : ''}>
+                      <p className="text-muted-foreground text-xs">Web MP</p>
                       <button
                         onClick={() => product.webMP?.precio && handleCopyPrice(product.webMP.precio)}
-                        className="font-semibold hover:text-primary cursor-pointer flex items-center gap-1"
+                        className={`font-semibold hover:text-primary cursor-pointer flex items-center gap-1 ${isMobile ? 'text-base' : 'text-sm'}`}
                       >
                         {product.webMP?.precio ? formatCurrency(product.webMP.precio) : 'N/A'}
-                        <Copy className="h-3 w-3" />
+                        <Copy className={isMobile ? 'h-4 w-4' : 'h-3 w-3'} />
                       </button>
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">Web Transfer</p>
+                    <div className={isMobile ? 'p-3 bg-background/50 rounded-md' : ''}>
+                      <p className="text-muted-foreground text-xs">Web Transfer</p>
                       <button
                         onClick={() => product.webTransfer?.precio && handleCopyPrice(product.webTransfer.precio)}
-                        className="font-semibold hover:text-primary cursor-pointer flex items-center gap-1"
+                        className={`font-semibold hover:text-primary cursor-pointer flex items-center gap-1 ${isMobile ? 'text-base' : 'text-sm'}`}
                       >
                         {product.webTransfer?.precio ? formatCurrency(product.webTransfer.precio) : 'N/A'}
-                        <Copy className="h-3 w-3" />
+                        <Copy className={isMobile ? 'h-4 w-4' : 'h-3 w-3'} />
                       </button>
                     </div>
-                    <div>
-                      <p className="text-[hsl(var(--emerald-final))]">Web Final</p>
+                    <div className={isMobile ? 'p-3 bg-[hsl(var(--emerald-final))]/10 rounded-md border border-[hsl(var(--emerald-final))]/20' : ''}>
+                      <p className="text-[hsl(var(--emerald-final))] text-xs">Web Final</p>
                       <button
                         onClick={() => product.webCupon?.precio && handleCopyPrice(product.webCupon.precio)}
-                        className="font-semibold text-[hsl(var(--emerald-final))] hover:opacity-80 cursor-pointer flex items-center gap-1"
+                        className={`font-semibold text-[hsl(var(--emerald-final))] hover:opacity-80 cursor-pointer flex items-center gap-1 ${isMobile ? 'text-base' : 'text-sm'}`}
                       >
                         {product.webCupon?.precio ? formatCurrency(product.webCupon.precio) : 'N/A'}
-                        <Copy className="h-3 w-3" />
+                        <Copy className={isMobile ? 'h-4 w-4' : 'h-3 w-3'} />
                       </button>
                     </div>
                     {product.marketplace?.precio && (
-                      <div className="col-span-3">
-                        <p className="text-muted-foreground">Marketplace</p>
+                      <div className={`${isMobile ? 'p-3 bg-background/50 rounded-md' : 'col-span-3'}`}>
+                        <p className="text-muted-foreground text-xs">Marketplace</p>
                         <button
                           onClick={() => handleCopyPrice(product.marketplace!.precio)}
-                          className="font-semibold hover:text-primary cursor-pointer flex items-center gap-1"
+                          className={`font-semibold hover:text-primary cursor-pointer flex items-center gap-1 ${isMobile ? 'text-base' : 'text-sm'}`}
                         >
                           {formatCurrency(product.marketplace.precio)}
-                          <Copy className="h-3 w-3" />
+                          <Copy className={isMobile ? 'h-4 w-4' : 'h-3 w-3'} />
                         </button>
                       </div>
                     )}
@@ -548,8 +591,57 @@ export function ProductList() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+              ))}
+            </div>
+            
+            {/* Load More Button */}
+            {hasMoreProducts && (
+              <div className="flex justify-center pt-4">
+                <Button
+                  variant="outline"
+                  onClick={loadMoreProducts}
+                  disabled={isLoadingMore}
+                  className={`${isMobile ? 'w-full h-12 text-base' : 'w-auto h-10 text-sm'} transition-all`}
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <Loader2 className={`${isMobile ? 'h-5 w-5' : 'h-4 w-4'} mr-2 animate-spin`} />
+                      Cargando...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className={`${isMobile ? 'h-5 w-5' : 'h-4 w-4'} mr-2`} />
+                      Cargar más productos ({filteredProducts.length - displayCount} restantes)
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+            
+            {/* Loading skeletons para productos adicionales */}
+            {isLoadingMore && (
+              <div className="grid gap-3 pt-2">
+                {Array.from({ length: Math.min(ITEMS_PER_LOAD, filteredProducts.length - displayCount) }).map((_, index) => (
+                  <Card key={`skeleton-${index}`} className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-4 w-4" />
+                          <Skeleton className="h-4 w-32" />
+                        </div>
+                        <Skeleton className="h-16 w-full" />
+                        <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-3 gap-4'}`}>
+                          <Skeleton className="h-8 w-full" />
+                          <Skeleton className="h-8 w-full" />
+                          <Skeleton className="h-8 w-full" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

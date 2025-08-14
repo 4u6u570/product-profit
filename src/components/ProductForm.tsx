@@ -144,12 +144,13 @@ export function ProductForm() {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Información Básica */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-4">{/* Mejor espaciado en móvil */}
           <div>
             <Label htmlFor="nombre">Producto</Label>
             <Input
               id="nombre"
               placeholder="Nombre del producto (opcional)"
+              className="h-12 md:h-10 text-base md:text-sm"
               {...form.register('nombre')}
             />
           </div>
@@ -158,6 +159,7 @@ export function ProductForm() {
             <Input
               id="sku"
               placeholder="Código SKU"
+              className="h-12 md:h-10 text-base md:text-sm"
               {...form.register('sku')}
             />
             <p className="text-xs text-muted-foreground mt-1">Requerido para exportar</p>
@@ -167,19 +169,21 @@ export function ProductForm() {
             <Input
               id="color"
               placeholder="Color (opcional)"
+              className="h-12 md:h-10 text-base md:text-sm"
               {...form.register('color')}
             />
           </div>
         </div>
 
         {/* Precio y Cantidad */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-4">
           <div>
             <Label htmlFor="cantidadPorCaja">Cantidad por Caja</Label>
             <Input
               id="cantidadPorCaja"
               type="number"
               min="1"
+              className="h-12 md:h-10 text-base md:text-sm"
               {...form.register('cantidadPorCaja', { valueAsNumber: true })}
             />
           </div>
@@ -202,6 +206,7 @@ export function ProductForm() {
               type="number"
               step="0.01"
               placeholder="30300.00"
+              className="h-12 md:h-10 text-base md:text-sm"
               {...form.register('precioBase', { valueAsNumber: true })}
             />
             <p className="text-xs text-muted-foreground mt-1">Ej.: 30300.00 (usa punto para decimales)</p>
@@ -212,6 +217,7 @@ export function ProductForm() {
               id="fleteTotal"
               type="number"
               step="0.01"
+              className="h-12 md:h-10 text-base md:text-sm"
               {...form.register('fleteTotal', { valueAsNumber: true })}
             />
           </div>
@@ -367,44 +373,45 @@ export function ProductForm() {
         {preview && !validationError && (
           <div className="p-4 bg-muted/50 rounded-lg space-y-3">
             <h4 className="font-semibold text-sm">Vista Previa</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Costo Unitario</p>
-                <p className="font-semibold">{formatCurrency(preview.costos.costoUnitario)}</p>
+            {/* Layout vertical en móvil, horizontal en desktop */}
+            <div className="flex flex-col md:grid md:grid-cols-4 gap-3 md:gap-4 text-sm">
+              <div className="p-3 md:p-0 bg-background/50 md:bg-transparent rounded-md md:rounded-none">
+                <p className="text-muted-foreground text-xs md:text-sm">Costo Unitario</p>
+                <p className="font-semibold text-lg md:text-sm">{formatCurrency(preview.costos.costoUnitario)}</p>
               </div>
-              <div>
-                <p className="text-muted-foreground">Web MP</p>
-                <p className="font-semibold">{formatCurrency(preview.webMP.precio)}</p>
+              <div className="p-3 md:p-0 bg-background/50 md:bg-transparent rounded-md md:rounded-none">
+                <p className="text-muted-foreground text-xs md:text-sm">Web MP</p>
+                <p className="font-semibold text-lg md:text-sm">{formatCurrency(preview.webMP.precio)}</p>
               </div>
-              <div>
-                <p className="text-muted-foreground">Web Transfer</p>
-                <p className="font-semibold">{formatCurrency(preview.webTransfer.precio)}</p>
+              <div className="p-3 md:p-0 bg-background/50 md:bg-transparent rounded-md md:rounded-none">
+                <p className="text-muted-foreground text-xs md:text-sm">Web Transfer</p>
+                <p className="font-semibold text-lg md:text-sm">{formatCurrency(preview.webTransfer.precio)}</p>
               </div>
-              <div>
-                <p className="text-[hsl(var(--emerald-final))]">Web Final</p>
-                <p className="font-semibold text-[hsl(var(--emerald-final))]">{formatCurrency(preview.webCupon.precio)}</p>
+              <div className="p-3 md:p-0 bg-background/50 md:bg-transparent rounded-md md:rounded-none">
+                <p className="text-[hsl(var(--emerald-final))] text-xs md:text-sm">Web Final</p>
+                <p className="font-semibold text-[hsl(var(--emerald-final))] text-lg md:text-sm">{formatCurrency(preview.webCupon.precio)}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Botones de Acción */}
-        <div className="flex gap-3">
+        <div className="flex flex-col md:flex-row gap-3">
           <Button 
             variant="outline" 
             onClick={handlePreview}
             disabled={!preview || !!validationError}
-            className="flex-1"
+            className="flex-1 h-12 md:h-10 text-base md:text-sm"
           >
-            <Eye className="h-4 w-4 mr-2" />
+            <Eye className="h-5 w-5 md:h-4 md:w-4 mr-2" />
             Vista Previa
           </Button>
           <Button 
             onClick={handleAddToList}
             disabled={!preview || !!validationError}
-            className="flex-1"
+            className="flex-1 h-12 md:h-10 text-base md:text-sm"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-5 w-5 md:h-4 md:w-4 mr-2" />
             Agregar a Lista
           </Button>
         </div>
