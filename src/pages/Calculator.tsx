@@ -24,23 +24,24 @@ export default function CalculatorPage() {
   }, [groupId, groupLoading, loadProducts]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/50 p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/50 p-4 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto space-y-6 w-full">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Calculator className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+            <Calculator className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
+            <h1 className="text-xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent truncate">
               Calculadora de Precios Pro
             </h1>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-muted-foreground">
+          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+            <span className="text-muted-foreground text-sm md:text-base truncate max-w-32 md:max-w-none">
               {user?.email}
             </span>
-            <Button variant="outline" onClick={signOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Salir
+            <Button variant="outline" onClick={signOut} size="sm" className="flex-shrink-0">
+              <LogOut className="h-4 w-4 mr-1 md:mr-2" />
+              <span className="hidden md:inline">Salir</span>
+              <span className="md:hidden">Salir</span>
             </Button>
           </div>
         </div>
