@@ -201,7 +201,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
           };
           
           // Recalculate if necessary fields changed
-          if (formData.precioBase || formData.pctGanancia || formData.pctMP || formData.pctCupon) {
+          if (formData.precioBase || formData.pctGanancia || formData.pctMP || formData.pctCupon || formData.pctIVA || formData.pctCL || formData.clFijo || formData.pctDescTransfer) {
             const fullFormData: ProductFormData = {
               sku: updatedProduct.sku,
               nombre: updatedProduct.nombre,
