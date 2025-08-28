@@ -119,11 +119,10 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
   const webMP = calcularGananciaNeta(precioWebMP);
   const webTransfer = calcularGananciaNeta(precioWebTransfer, true);
 
-  // 10. Calcular precio Web Cupón (Web Transfer con descuento del 10%)
-  const precioWebCupon = applyRounding(
-    precioWebTransfer * 0.9, 
-    data.reglaRedondeo
-  );
+  // 10. Calcular precio Web Cupón (solo aplica descuento si hay cupón configurado)
+  const precioWebCupon = data.pctCupon > 0 
+    ? applyRounding(precioWebTransfer * 0.9, data.reglaRedondeo)
+    : precioWebTransfer;
   const webCupon = calcularGananciaNeta(precioWebCupon, true);
 
   return {
