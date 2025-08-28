@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calculator, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,11 +6,13 @@ import { useProductStore } from '@/hooks/useProductStore';
 import { useGroup } from '@/hooks/useGroup';
 import { ProductForm } from '@/components/ProductForm';
 import { ProductList } from '@/components/ProductList';
+import { Product } from '@/types/product';
 
 export default function CalculatorPage() {
   const { user, signOut } = useAuth();
   const { groupId, loading: groupLoading } = useGroup();
   const { loadFromLocalStorage, loadProducts } = useProductStore();
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
 
   useEffect(() => {
     // Load initial data from localStorage
@@ -22,6 +24,14 @@ export default function CalculatorPage() {
       loadProducts(groupId);
     }
   }, [groupId, groupLoading, loadProducts]);
+
+  const handleEditProduct = (product: Product) => {
+    setProductToEdit(product);
+  };
+
+  const handleEditComplete = () => {
+    setProductToEdit(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/50 p-4 overflow-x-hidden">
@@ -50,12 +60,15 @@ export default function CalculatorPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           {/* Panel Izquierdo - Formulario */}
           <div className="space-y-4 lg:space-y-6">
-            <ProductForm />
+            <ProductForm 
+              productToEdit={productToEdit} 
+              onEditComplete={handleEditComplete}
+            />
           </div>
 
           {/* Panel Derecho - Lista */}
           <div className="space-y-4 lg:space-y-6">
-            <ProductList />
+            <ProductList onEditProduct={handleEditProduct} />
           </div>
         </div>
       </div>

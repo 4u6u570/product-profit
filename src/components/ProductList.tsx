@@ -19,6 +19,7 @@ import {
   Search,
   ChevronDown,
   Loader2,
+  Calculator,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -37,7 +38,11 @@ interface InlineEditState {
   value: string;
 }
 
-export function ProductList() {
+interface ProductListProps {
+  onEditProduct?: (product: Product) => void;
+}
+
+export function ProductList({ onEditProduct }: ProductListProps = {}) {
   const { groupId } = useGroup();
   const { 
     products, 
@@ -370,6 +375,10 @@ export function ProductList() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => onEditProduct?.(product)}>
+                          <Calculator className="h-4 w-4 mr-2" />
+                          Editar en Calculadora
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => togglePin(product.id)}>
                           {product.pinned ? (
                             <>

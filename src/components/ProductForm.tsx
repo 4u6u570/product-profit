@@ -39,12 +39,18 @@ const formSchema = z.object({
   reglaRedondeo: z.enum(['none', '10', '50', '100', 'psico']),
 });
 
-export function ProductForm() {
+interface ProductFormProps {
+  productToEdit?: Product | null;
+  onEditComplete?: () => void;
+}
+
+export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps = {}) {
   const { toast } = useToast();
   const { groupId } = useGroup();
-  const { addProduct } = useProductStore();
+  const { addProduct, updateProduct } = useProductStore();
   const [preview, setPreview] = useState<ProductCalculationResult | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(formSchema),
@@ -70,6 +76,36 @@ export function ProductForm() {
       reglaRedondeo: 'none',
     },
   });
+
+  // Load product data when editing
+  useEffect(() => {
+    if (productToEdit) {
+      setIsEditing(true);
+      form.reset({
+        sku: productToEdit.sku || '',
+        nombre: productToEdit.nombre,
+        color: productToEdit.color || '',
+        cantidadPorCaja: productToEdit.cantidadPorCaja,
+        tipoPrecio: productToEdit.tipoPrecio,
+        precioBase: productToEdit.precioBase,
+        fleteTotal: productToEdit.fleteTotal,
+        costoEnvioUnitario: productToEdit.costoEnvioUnitario || 0,
+        absorboEnvio: productToEdit.absorboEnvio,
+        modoProducto: productToEdit.modoProducto,
+        pctGanancia: productToEdit.pctGanancia,
+        pctMP: productToEdit.pctMP,
+        pctCupon: productToEdit.pctCupon,
+        clTipo: productToEdit.clTipo,
+        pctCL: productToEdit.pctCL || 0,
+        clFijo: productToEdit.clFijo || 0,
+        pctIVA: productToEdit.pctIVA || 0,
+        pctDescTransfer: productToEdit.pctDescTransfer,
+        reglaRedondeo: productToEdit.reglaRedondeo,
+      });
+    } else {
+      setIsEditing(false);
+    }
+  }, [productToEdit, form]);
 
   const watchedValues = form.watch();
 
@@ -115,23 +151,38 @@ export function ProductForm() {
     }
 
     try {
-      await addProduct(watchedValues, groupId);
+      if (isEditing && productToEdit) {
+        await updateProduct(productToEdit.id, watchedValues);
+        toast({
+          title: "Producto actualizado",
+          description: "Producto actualizado exitosamente",
+        });
+        onEditComplete?.();
+      } else {
+        await addProduct(watchedValues, groupId);
+        toast({
+          title: "Producto agregado",
+          description: "Producto agregado a la lista exitosamente",
+        });
+      }
       
-      toast({
-        title: "Producto agregado",
-        description: "Producto agregado a la lista exitosamente",
-      });
-      
-      // Reset form after successful addition
+      // Reset form after successful operation
       form.reset();
+      setIsEditing(false);
     } catch (error) {
-      console.error('Error adding product:', error);
+      console.error('Error saving product:', error);
       toast({
         title: "Error",
-        description: `No se pudo agregar el producto: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+        description: `No se pudo ${isEditing ? 'actualizar' : 'agregar'} el producto: ${error instanceof Error ? error.message : 'Error desconocido'}`,
         variant: "destructive",
       });
     }
+  };
+
+  const handleCancelEdit = () => {
+    form.reset();
+    setIsEditing(false);
+    onEditComplete?.();
   };
 
   return (
@@ -139,8 +190,13 @@ export function ProductForm() {
       <CardHeader>
         <CardTitle className="text-2xl flex items-center gap-2">
           <Calculator className="h-6 w-6 text-primary" />
-          Crear Producto
+          {isEditing ? 'Editar Producto' : 'Crear Producto'}
         </CardTitle>
+        {isEditing && (
+          <p className="text-sm text-muted-foreground">
+            Editando: {productToEdit?.nombre}
+          </p>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Información Básica */}
@@ -397,6 +453,15 @@ export function ProductForm() {
 
         {/* Botones de Acción */}
         <div className="flex flex-col md:flex-row gap-3">
+          {isEditing && (
+            <Button 
+              variant="outline" 
+              onClick={handleCancelEdit}
+              className="flex-1 h-12 md:h-10 text-base md:text-sm"
+            >
+              Cancelar
+            </Button>
+          )}
           <Button 
             variant="outline" 
             onClick={handlePreview}
@@ -412,7 +477,7 @@ export function ProductForm() {
             className="flex-1 h-12 md:h-10 text-base md:text-sm"
           >
             <Plus className="h-5 w-5 md:h-4 md:w-4 mr-2" />
-            Agregar a Lista
+            {isEditing ? 'Actualizar' : 'Agregar a Lista'}
           </Button>
         </div>
       </CardContent>
