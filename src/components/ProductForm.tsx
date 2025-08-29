@@ -166,9 +166,10 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
         });
       }
       
-      // Reset form after successful operation
-      form.reset();
-      setIsEditing(false);
+      // Reset form after successful operation only if not editing
+      if (!isEditing) {
+        form.reset();
+      }
     } catch (error) {
       console.error('Error saving product:', error);
       toast({
