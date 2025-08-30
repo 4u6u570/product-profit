@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Calculator, LogOut } from 'lucide-react';
-import compraLindaLogo from '@/assets/compra-linda-logo.png';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useProductStore } from '@/hooks/useProductStore';
@@ -41,11 +40,6 @@ export default function CalculatorPage() {
         {/* Header */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-            <img 
-              src={compraLindaLogo} 
-              alt="Compra Linda" 
-              className="h-8 w-auto md:h-12 flex-shrink-0"
-            />
             <Calculator className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
             <h1 className="text-xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent truncate">
               Calculadora de Precios Pro
