@@ -7,6 +7,7 @@ import { useProductStore } from '@/hooks/useProductStore';
 import { useGroup } from '@/hooks/useGroup';
 import { ProductForm } from '@/components/ProductForm';
 import { ProductList } from '@/components/ProductList';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Product } from '@/types/product';
 
 export default function CalculatorPage() {
@@ -51,6 +52,7 @@ export default function CalculatorPage() {
             </h1>
           </div>
           <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+            <ThemeToggle />
             <span className="text-muted-foreground text-sm md:text-base truncate max-w-32 md:max-w-none">
               {user?.email}
             </span>
