@@ -211,16 +211,16 @@ export function ProductList({ onEditProduct }: ProductListProps = {}) {
 
   const hasMoreProducts = filteredProducts.length > displayCount && !searchTerm.trim();
 
-  // Función para cargar más productos
+  // Función para cargar todos los productos
   const loadMoreProducts = useCallback(() => {
     setIsLoadingMore(true);
     
     // Simular un delay para mostrar el loading
     setTimeout(() => {
-      setDisplayCount(prev => prev + ITEMS_PER_LOAD);
+      setDisplayCount(filteredProducts.length); // Mostrar todos los productos
       setIsLoadingMore(false);
     }, 300);
-  }, [ITEMS_PER_LOAD]);
+  }, [filteredProducts.length]);
 
   // Resetear displayCount cuando cambie el término de búsqueda
   useEffect(() => {
