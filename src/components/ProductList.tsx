@@ -199,12 +199,17 @@ export function ProductList({ onEditProduct }: ProductListProps = {}) {
     );
   }, [products, searchTerm]);
 
-  // Productos a mostrar con lazy loading
+  // Productos a mostrar con lazy loading (no aplicar límite cuando hay búsqueda)
   const displayedProducts = useMemo(() => {
+    // Si hay término de búsqueda, mostrar todos los resultados filtrados
+    if (searchTerm.trim()) {
+      return filteredProducts;
+    }
+    // Si no hay búsqueda, aplicar lazy loading
     return filteredProducts.slice(0, displayCount);
-  }, [filteredProducts, displayCount]);
+  }, [filteredProducts, displayCount, searchTerm]);
 
-  const hasMoreProducts = filteredProducts.length > displayCount;
+  const hasMoreProducts = filteredProducts.length > displayCount && !searchTerm.trim();
 
   // Función para cargar más productos
   const loadMoreProducts = useCallback(() => {
