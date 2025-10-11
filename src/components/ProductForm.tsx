@@ -66,7 +66,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
       absorboEnvio: false,
       modoProducto: 'propio',
       pctGanancia: 0,
-      pctMP: 7.61,
+      pctMP: 10,
       pctCupon: 0,
       clTipo: 'porcentaje',
       pctCL: 0,

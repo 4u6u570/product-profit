@@ -80,9 +80,9 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
   // 6. Aplicar redondeo al precio Web MP
   const precioWebMP = applyRounding(precioWebMPBruto, data.reglaRedondeo);
 
-  // 7. Calcular precio Web Transferencia
+  // 7. Calcular precio Web Transferencia (basado en subtotal, sin comisiones MP)
   const precioWebTransfer = applyRounding(
-    precioWebMP * (1 - data.pctDescTransfer / 100), 
+    subtotal * (1 - data.pctDescTransfer / 100), 
     data.reglaRedondeo
   );
 
