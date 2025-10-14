@@ -430,7 +430,7 @@ export function ProductList({ onEditProduct }: ProductListProps = {}) {
                       </button>
                     </div>
                     <div className={isMobile ? 'p-3 bg-background/50 rounded-md' : ''}>
-                      <p className="text-muted-foreground text-xs">Web Transfer</p>
+                      <p className="text-muted-foreground text-xs">Web Transferencia</p>
                       <button
                         onClick={() => product.webTransfer?.precio && handleCopyPrice(product.webTransfer.precio)}
                         className={`font-semibold hover:text-primary cursor-pointer flex items-center gap-1 ${isMobile ? 'text-base' : 'text-sm'}`}

@@ -441,7 +441,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
                 <p className="font-semibold text-lg md:text-sm">{formatCurrency(preview.webMP.precio)}</p>
               </div>
               <div className="p-3 md:p-0 bg-background/50 md:bg-transparent rounded-md md:rounded-none">
-                <p className="text-muted-foreground text-xs md:text-sm">Web Transfer</p>
+                <p className="text-muted-foreground text-xs md:text-sm">Web Transferencia</p>
                 <p className="font-semibold text-lg md:text-sm">{formatCurrency(preview.webTransfer.precio)}</p>
               </div>
               <div className="p-3 md:p-0 bg-background/50 md:bg-transparent rounded-md md:rounded-none">
