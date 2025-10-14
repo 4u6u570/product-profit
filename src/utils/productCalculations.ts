@@ -116,8 +116,8 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
   const webMP = calcularGananciaNeta(precioWebMP);
   const webTransfer = calcularGananciaNeta(precioWebTransfer, true);
 
-  // 10. Calcular precio Marketplace (mismo que Web Transfer - % Cupón NO afecta)
-  const precioMarketplace = precioWebTransfer;
+  // 10. Calcular precio Marketplace (basado en subtotal sin descuento de transferencia)
+  const precioMarketplace = applyRounding(subtotal, data.reglaRedondeo);
   const marketplace = calcularGananciaNeta(precioMarketplace, true);
 
   return {
