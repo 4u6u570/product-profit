@@ -121,7 +121,7 @@ export function ProductList({ onEditProduct }: ProductListProps = {}) {
     try {
       await updateProduct(inlineEdit.productId, {
         [inlineEdit.field]: finalValue
-      });
+      }, groupId);
       
       toast({
         title: 'Producto actualizado',
@@ -440,7 +440,7 @@ export function ProductList({ onEditProduct }: ProductListProps = {}) {
                       </button>
                     </div>
                     <div className={isMobile ? 'p-3 bg-[hsl(var(--emerald-final))]/10 rounded-md border border-[hsl(var(--emerald-final))]/20' : ''}>
-                      <p className="text-[hsl(var(--emerald-final))] text-xs">Web Final</p>
+                      <p className="text-[hsl(var(--emerald-final))] text-xs">Marketplace</p>
                       <button
                         onClick={() => product.webCupon?.precio && handleCopyPrice(product.webCupon.precio)}
                         className={`font-semibold text-[hsl(var(--emerald-final))] hover:opacity-80 cursor-pointer flex items-center gap-1 ${isMobile ? 'text-base' : 'text-sm'}`}

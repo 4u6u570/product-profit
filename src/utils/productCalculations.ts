@@ -86,10 +86,7 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
     data.reglaRedondeo
   );
 
-  // 8. Sin marketplace - IVA ya está incluido en el costo unitario
-  const marketplace = undefined;
-
-  // 9. Recalcular ganancias y márgenes con precios redondeados
+  // 8. Recalcular ganancias y márgenes con precios redondeados
   const calcularGananciaNeta = (precio: number, esTransferencia: boolean = false): { gananciaNeta: number; margenPct: number } => {
     if (data.modoProducto === 'propio') {
       // Producto propio
@@ -119,11 +116,9 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
   const webMP = calcularGananciaNeta(precioWebMP);
   const webTransfer = calcularGananciaNeta(precioWebTransfer, true);
 
-  // 10. Calcular precio Web Cupón (solo aplica descuento si hay cupón configurado)
-  const precioWebCupon = data.pctCupon > 0 
-    ? applyRounding(precioWebTransfer * 0.9, data.reglaRedondeo)
-    : precioWebTransfer;
-  const webCupon = calcularGananciaNeta(precioWebCupon, true);
+  // 10. Calcular precio Marketplace (mismo que Web Transfer - % Cupón NO afecta)
+  const precioMarketplace = precioWebTransfer;
+  const marketplace = calcularGananciaNeta(precioMarketplace, true);
 
   return {
     costos: {
@@ -141,11 +136,11 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
       margenPct: webTransfer.margenPct,
     },
     webCupon: {
-      precio: precioWebCupon,
-      gananciaNeta: webCupon.gananciaNeta,
-      margenPct: webCupon.margenPct,
+      precio: precioMarketplace,
+      gananciaNeta: marketplace.gananciaNeta,
+      margenPct: marketplace.margenPct,
     },
-    marketplace,
+    marketplace: undefined,
   };
 }
 

@@ -152,7 +152,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
 
     try {
       if (isEditing && productToEdit) {
-        await updateProduct(productToEdit.id, watchedValues);
+        await updateProduct(productToEdit.id, watchedValues, groupId);
         toast({
           title: "Producto actualizado",
           description: "Producto actualizado exitosamente",
@@ -445,7 +445,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
                 <p className="font-semibold text-lg md:text-sm">{formatCurrency(preview.webTransfer.precio)}</p>
               </div>
               <div className="p-3 md:p-0 bg-background/50 md:bg-transparent rounded-md md:rounded-none">
-                <p className="text-[hsl(var(--emerald-final))] text-xs md:text-sm">Web Final</p>
+                <p className="text-[hsl(var(--emerald-final))] text-xs md:text-sm">Marketplace</p>
                 <p className="font-semibold text-[hsl(var(--emerald-final))] text-lg md:text-sm">{formatCurrency(preview.webCupon.precio)}</p>
               </div>
             </div>
