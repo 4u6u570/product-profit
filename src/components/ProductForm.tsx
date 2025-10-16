@@ -62,7 +62,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
       tipoPrecio: 'unitario',
       precioBase: 0,
       fleteTotal: 0,
-      costoEnvioUnitario: 0,
+      costoEnvioUnitario: 2500,
       absorboEnvio: false,
       modoProducto: 'propio',
       pctGanancia: 0,
@@ -330,25 +330,29 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               </span>
             </div>
           </div>
-          {watchedValues.absorboEnvio && (
-            <div>
-              <Label htmlFor="costoEnvioUnitario">Costo Envío Unitario</Label>
-              <Input
-                id="costoEnvioUnitario"
-                type="number"
-                step="0.01"
-                {...form.register('costoEnvioUnitario', { 
-                  valueAsNumber: true,
-                  onChange: (e) => {
-                    const value = parseFloat(e.target.value);
-                    if (isNaN(value) || value < 0) {
-                      form.setValue('costoEnvioUnitario', 0);
-                    }
+          <div>
+            <Label htmlFor="costoEnvioUnitario">Costo envío local absorbido</Label>
+            <Input
+              id="costoEnvioUnitario"
+              type="number"
+              step="0.01"
+              placeholder="2500"
+              className="h-12 md:h-10 text-base md:text-sm"
+              disabled={!watchedValues.absorboEnvio}
+              {...form.register('costoEnvioUnitario', { 
+                valueAsNumber: true,
+                onChange: (e) => {
+                  const value = parseFloat(e.target.value);
+                  if (isNaN(value) || value < 0) {
+                    form.setValue('costoEnvioUnitario', 0);
                   }
-                })}
-              />
-            </div>
-          )}
+                }
+              })}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {watchedValues.absorboEnvio ? 'Monto que se suma al costo unitario' : 'Activa "¿Absorbo envío?" para editar'}
+            </p>
+          </div>
         </div>
 
         {/* Ganancia y Comisiones */}

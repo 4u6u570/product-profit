@@ -38,86 +38,100 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
   // 2. Calcular flete unitario
   const fleteUnitario = data.fleteTotal / data.cantidadPorCaja;
 
-  // 3. Calcular costo unitario total (incluye IVA si está configurado)
-  const costoEnvio = data.absorboEnvio ? (data.costoEnvioUnitario || 0) : 0;
+  // 3. Calcular IVA sobre precio base
   const costoIVA = (data.pctIVA || 0) > 0 ? costoUnitarioBase * ((data.pctIVA || 0) / 100) : 0;
-  const costoUnitario = costoUnitarioBase + fleteUnitario + costoEnvio + costoIVA;
 
-  // 4. Calcular ganancia deseada y subtotal
-  const gananciaDeseada = costoUnitario * (data.pctGanancia / 100);
-  const subtotal = costoUnitario + gananciaDeseada;
+  // 4. Calcular costo unitario total (precio base + flete + IVA + envío absorbido)
+  const costoEnvio = data.absorboEnvio ? (data.costoEnvioUnitario || 0) : 0;
+  const costoUnitario = costoUnitarioBase + fleteUnitario + costoIVA + costoEnvio;
 
-  // 5. Calcular precio Web MP según modo de producto
+  // 5. Aplicar factores de forma secuencial y multiplicativa
+  // PrecioFinal = CostoUnitario × (1 + %Ganancia) × (1 + %MP) × (1 + %Cupón) × (1 + ComisiónCL)
   let precioWebMPBruto: number;
 
   if (data.modoProducto === 'propio') {
-    // Producto propio: comisiones se descuentan del cobro
-    const tMP = data.pctMP / 100;
-    const tCup = data.pctCupon / 100;
-    const tCL = data.clTipo === 'porcentaje' ? (data.pctCL || 0) / 100 : 0;
+    // Producto propio: aplicar todos los factores multiplicativamente
+    const factorGanancia = 1 + (data.pctGanancia / 100);
+    const factorMP = 1 + (data.pctMP / 100);
+    const factorCupon = 1 + (data.pctCupon / 100);
+    const factorCL = data.clTipo === 'porcentaje' 
+      ? 1 + ((data.pctCL || 0) / 100)
+      : 1;
 
-    const comisionesTotales = tMP + tCup + tCL;
+    precioWebMPBruto = costoUnitario * factorGanancia * factorMP * factorCupon * factorCL;
     
-    if (comisionesTotales >= 1) {
-      // Evitar división por cero
-      precioWebMPBruto = subtotal * 2;
-    } else {
-      precioWebMPBruto = subtotal / (1 - comisionesTotales);
+    // Si CL es fijo, sumarlo al final
+    if (data.clTipo === 'fijo') {
+      precioWebMPBruto += (data.clFijo || 0);
     }
   } else {
-    // Producto de tercero: CL es ingreso adicional
-    const tMP = data.pctMP / 100;
-    const tCup = data.pctCupon / 100;
+    // Producto de tercero: aplicar ganancia, MP, cupón y luego sumar CL como ingreso
+    const factorGanancia = 1 + (data.pctGanancia / 100);
+    const factorMP = 1 + (data.pctMP / 100);
+    const factorCupon = 1 + (data.pctCupon / 100);
 
-    const precioSinMPCupon = subtotal / (1 - tMP - tCup);
+    const precioBase = costoUnitario * factorGanancia * factorMP * factorCupon;
+    
     const ingresoCL = data.clTipo === 'fijo' 
-      ? (data.clFijo || 0) 
-      : precioSinMPCupon * ((data.pctCL || 0) / 100);
+      ? (data.clFijo || 0)
+      : precioBase * ((data.pctCL || 0) / 100);
 
-    precioWebMPBruto = precioSinMPCupon + ingresoCL;
+    precioWebMPBruto = precioBase + ingresoCL;
   }
 
   // 6. Aplicar redondeo al precio Web MP
   const precioWebMP = applyRounding(precioWebMPBruto, data.reglaRedondeo);
 
-  // 7. Calcular precio Web Transferencia (basado en subtotal, sin comisiones MP)
+  // 7. Calcular precio Web Transferencia (descuento sobre Web MP)
   const precioWebTransfer = applyRounding(
-    subtotal * (1 - data.pctDescTransfer / 100), 
+    precioWebMP * (1 - data.pctDescTransfer / 100), 
     data.reglaRedondeo
   );
 
-  // 8. Recalcular ganancias y márgenes con precios redondeados
+  // 8. Recalcular ganancias y márgenes con precios finales
   const calcularGananciaNeta = (precio: number, esTransferencia: boolean = false): { gananciaNeta: number; margenPct: number } => {
-    if (data.modoProducto === 'propio') {
-      // Producto propio
-      const comisionMP = esTransferencia ? 0 : precio * (data.pctMP / 100);
-      const cupon = esTransferencia ? 0 : precio * (data.pctCupon / 100);
-      const comisionCL = esTransferencia ? 0 : 
-        (data.clTipo === 'fijo' ? (data.clFijo || 0) : precio * ((data.pctCL || 0) / 100));
-
-      const gananciaNeta = precio - costoUnitario - comisionMP - cupon - comisionCL;
+    // Para transferencia: ganancia = precio - costo (sin comisiones)
+    // Para Web MP: ganancia = precio - costo - todas las comisiones descontadas del precio
+    if (esTransferencia) {
+      const gananciaNeta = precio - costoUnitario;
       const margenPct = precio > 0 ? (gananciaNeta / precio) * 100 : 0;
-
-      return { gananciaNeta, margenPct };
-    } else {
-      // Producto de tercero
-      const comisionMP = esTransferencia ? 0 : precio * (data.pctMP / 100);
-      const cupon = esTransferencia ? 0 : precio * (data.pctCupon / 100);
-      const ingresoCL = esTransferencia ? 0 : 
-        (data.clTipo === 'fijo' ? (data.clFijo || 0) : precio * ((data.pctCL || 0) / 100));
-
-      const gananciaNeta = (precio - comisionMP - cupon) - costoUnitario + ingresoCL;
-      const margenPct = precio > 0 ? (gananciaNeta / precio) * 100 : 0;
-
       return { gananciaNeta, margenPct };
     }
+
+    // Para Web MP, las comisiones ya están incorporadas en el precio inflado
+    // La ganancia real es el precio menos el costo y menos todas las comisiones
+    const comisionMP = precio / (1 + (data.pctMP / 100) + (data.pctCupon / 100)) * (data.pctMP / 100);
+    const cupon = precio / (1 + (data.pctMP / 100) + (data.pctCupon / 100)) * (data.pctCupon / 100);
+    
+    let comisionCL = 0;
+    if (data.modoProducto === 'propio') {
+      comisionCL = data.clTipo === 'fijo' 
+        ? (data.clFijo || 0)
+        : precio * ((data.pctCL || 0) / 100);
+    }
+    
+    let ingresoCL = 0;
+    if (data.modoProducto === 'tercero') {
+      ingresoCL = data.clTipo === 'fijo' 
+        ? (data.clFijo || 0)
+        : precio * ((data.pctCL || 0) / 100);
+    }
+
+    const gananciaNeta = data.modoProducto === 'propio'
+      ? precio - costoUnitario - comisionMP - cupon - comisionCL
+      : precio - costoUnitario - comisionMP - cupon + ingresoCL;
+    
+    const margenPct = precio > 0 ? (gananciaNeta / precio) * 100 : 0;
+
+    return { gananciaNeta, margenPct };
   };
 
   const webMP = calcularGananciaNeta(precioWebMP);
   const webTransfer = calcularGananciaNeta(precioWebTransfer, true);
 
-  // 10. Calcular precio Marketplace (basado en subtotal sin descuento de transferencia)
-  const precioMarketplace = applyRounding(subtotal, data.reglaRedondeo);
+  // 10. Calcular precio Marketplace (costo + ganancia, sin infladores)
+  const subtotalMarketplace = costoUnitario * (1 + (data.pctGanancia / 100));
+  const precioMarketplace = applyRounding(subtotalMarketplace, data.reglaRedondeo);
   const marketplace = calcularGananciaNeta(precioMarketplace, true);
 
   return {
