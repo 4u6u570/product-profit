@@ -1,299 +1,514 @@
-import { describe, test, expect } from 'vitest';
+import { describe, it, expect } from 'vitest';
+import { calculateProduct, validateProductData, applyRounding } from './productCalculations';
+import { ProductFormData } from '@/types/product';
 
-// Función de cálculo extraída para testing
-export const calculateProductValues = (data: {
-  cantidadPorCaja: number;
-  tipoPreçioBase: 'porCaja' | 'unitarioFijo' | 'unitarioMargen';
-  precioBase: number;
-  porcentajeGanancia: number;
-  comisionMP: number;
-  porcentajeCupon: number;
-  tipoComisionCompraLinda: 'porcentaje' | 'precioFijo';
-  comisionCompraLinda: number;
-  fleteTotal: number;
-}) => {
-  let costoUnitario = 0;
-  
-  if (data.tipoPreçioBase === 'porCaja') {
-    costoUnitario = data.precioBase / data.cantidadPorCaja;
-  } else if (data.tipoPreçioBase === 'unitarioFijo') {
-    costoUnitario = data.precioBase;
-  } else if (data.tipoPreçioBase === 'unitarioMargen') {
-    costoUnitario = data.precioBase * (1 + data.porcentajeGanancia / 100);
-  }
+describe('productCalculations - Rounding Rules', () => {
+  describe('applyRounding', () => {
+    it('should not round when rule is "none"', () => {
+      expect(applyRounding(1234.56, 'none')).toBe(1234.56);
+      expect(applyRounding(999.99, 'none')).toBe(999.99);
+    });
 
-  const fleteUnitario = data.fleteTotal / data.cantidadPorCaja;
-  const costoConFlete = costoUnitario + fleteUnitario;
-  
-  // Nueva fórmula: Precio con ganancia deseada
-  const precioConGanancia = costoConFlete * (1 + data.porcentajeGanancia / 100);
-  
-  // Calcular comisiones totales como porcentaje del precio final
-  let comisionCompraLindaPorcentaje = 0;
-  let comisionCompraLindaFija = 0;
-  
-  if (data.tipoComisionCompraLinda === 'porcentaje') {
-    comisionCompraLindaPorcentaje = data.comisionCompraLinda;
-  } else {
-    // Para comisión fija, la convertimos a porcentaje aproximado basado en el precio con ganancia
-    comisionCompraLindaFija = data.comisionCompraLinda;
-    comisionCompraLindaPorcentaje = (comisionCompraLindaFija / precioConGanancia) * 100;
-  }
-  
-  const comisionesTotalesPorcentaje = data.comisionMP + data.porcentajeCupon + comisionCompraLindaPorcentaje;
-  
-  // Ajustar precio hacia arriba para mantener ganancia neta
-  let precioVenta;
-  if (comisionesTotalesPorcentaje >= 100) {
-    // Prevenir división por cero o números negativos
-    precioVenta = precioConGanancia * 2; // Fallback conservador
-  } else {
-    precioVenta = precioConGanancia / (1 - comisionesTotalesPorcentaje / 100);
-  }
-  
-  // Calcular comisiones reales basadas en el precio final
-  const comisionMP = precioVenta * (data.comisionMP / 100);
-  const cuponDescuento = precioVenta * (data.porcentajeCupon / 100);
-  
-  let comisionCompraLindaReal;
-  if (data.tipoComisionCompraLinda === 'porcentaje') {
-    comisionCompraLindaReal = precioVenta * (data.comisionCompraLinda / 100);
-  } else {
-    comisionCompraLindaReal = data.comisionCompraLinda;
-  }
-  
-  // La ganancia neta debería ser exactamente la configurada
-  const gananciaNeta = precioVenta - costoConFlete - comisionCompraLindaReal - comisionMP - cuponDescuento;
-  const margenFinal = (gananciaNeta / precioVenta) * 100;
+    it('should round to nearest 10', () => {
+      expect(applyRounding(1234, '10')).toBe(1230);
+      expect(applyRounding(1235, '10')).toBe(1240);
+      expect(applyRounding(1234.5, '10')).toBe(1230);
+    });
 
-  return {
-    costoUnitario,
-    precioVenta,
-    gananciaNeta,
-    margenFinal
+    it('should round to nearest 50', () => {
+      expect(applyRounding(1224, '50')).toBe(1200);
+      expect(applyRounding(1225, '50')).toBe(1250);
+      expect(applyRounding(1274, '50')).toBe(1250);
+    });
+
+    it('should round to nearest 100', () => {
+      expect(applyRounding(1249, '100')).toBe(1200);
+      expect(applyRounding(1250, '100')).toBe(1300);
+      expect(applyRounding(1349, '100')).toBe(1300);
+    });
+
+    it('should apply psychological pricing (X99)', () => {
+      expect(applyRounding(1234, 'psico')).toBe(1299); // 1200-1299 range
+      expect(applyRounding(1149, 'psico')).toBe(1099); // Below 50, goes to previous X99
+      expect(applyRounding(1050, 'psico')).toBe(1099); // Above 50, goes to current X99
+      expect(applyRounding(999, 'psico')).toBe(999);
+    });
+  });
+});
+
+describe('productCalculations - Cost Calculations', () => {
+  const baseProductData: ProductFormData = {
+    sku: 'TEST001',
+    nombre: 'Producto Test',
+    color: 'Azul',
+    cantidadPorCaja: 1,
+    tipoPrecio: 'unitario',
+    precioBase: 1000,
+    fleteTotal: 100,
+    costoEnvioUnitario: 0,
+    absorboEnvio: false,
+    modoProducto: 'propio',
+    pctGanancia: 30,
+    pctMP: 10,
+    pctCupon: 5,
+    clTipo: 'porcentaje',
+    pctCL: 2,
+    clFijo: 0,
+    pctIVA: 0,
+    pctDescTransfer: 10,
+    reglaRedondeo: 'none',
   };
-};
 
-describe('Calculadora de Productos - Fórmulas', () => {
-  describe('Cálculo tipo "porCaja"', () => {
-    test('debe calcular correctamente el costo unitario dividiendo precio base por cantidad', () => {
-      const data = {
-        cantidadPorCaja: 10,
-        tipoPreçioBase: 'porCaja' as const,
-        precioBase: 100,
-        porcentajeGanancia: 20,
-        comisionMP: 5,
-        porcentajeCupon: 10,
-        tipoComisionCompraLinda: 'porcentaje' as const,
-        comisionCompraLinda: 15,
-        fleteTotal: 20
-      };
-
-      const result = calculateProductValues(data);
-      
-      // Costo unitario: 100/10 = 10
-      // Flete unitario: 20/10 = 2
-      // Costo con flete: 10 + 2 = 12
-      expect(result.costoUnitario).toBe(10);
-    });
-
-    test('debe calcular precio de venta final correctamente con nueva fórmula', () => {
-      const data = {
-        cantidadPorCaja: 4,
-        tipoPreçioBase: 'porCaja' as const,
-        precioBase: 80,
-        porcentajeGanancia: 25,
-        comisionMP: 6,
-        porcentajeCupon: 8,
-        tipoComisionCompraLinda: 'porcentaje' as const,
-        comisionCompraLinda: 10,
-        fleteTotal: 16
-      };
-
-      const result = calculateProductValues(data);
-      
-      // Nueva fórmula:
-      // Costo unitario: 80/4 = 20
-      // Flete unitario: 16/4 = 4  
-      // Costo con flete: 20 + 4 = 24
-      // Precio con ganancia: 24 * 1.25 = 30
-      // Comisiones totales: 6% + 8% + 10% = 24%
-      // Precio final: 30 / (1 - 0.24) = 30 / 0.76 = 39.47
-      
-      expect(result.precioVenta).toBeCloseTo(39.47, 2);
-    });
+  it('should calculate unit cost for "unitario" pricing', () => {
+    const result = calculateProduct(baseProductData);
+    // Costo base: 1000
+    // Flete unitario: 100/1 = 100
+    // Total: 1100
+    expect(result.costos.costoUnitario).toBe(1100);
+    expect(result.costos.fleteUnitario).toBe(100);
   });
 
-  describe('Cálculo tipo "unitarioFijo"', () => {
-    test('debe usar el precio base como costo unitario directamente', () => {
-      const data = {
-        cantidadPorCaja: 5,
-        tipoPreçioBase: 'unitarioFijo' as const,
-        precioBase: 15,
-        porcentajeGanancia: 30,
-        comisionMP: 4,
-        porcentajeCupon: 5,
-        tipoComisionCompraLinda: 'precioFijo' as const,
-        comisionCompraLinda: 2,
-        fleteTotal: 10
-      };
-
-      const result = calculateProductValues(data);
-      
-      // Costo unitario directo: 15
-      expect(result.costoUnitario).toBe(15);
-    });
+  it('should calculate unit cost for "caja" pricing', () => {
+    const data = {
+      ...baseProductData,
+      tipoPrecio: 'caja' as const,
+      precioBase: 6000,
+      cantidadPorCaja: 6,
+      fleteTotal: 300,
+    };
+    const result = calculateProduct(data);
+    // Costo base unitario: 6000/6 = 1000
+    // Flete unitario: 300/6 = 50
+    // Total: 1050
+    expect(result.costos.costoUnitario).toBe(1050);
+    expect(result.costos.fleteUnitario).toBe(50);
   });
 
-  describe('Cálculo tipo "unitarioMargen"', () => {
-    test('debe aplicar el margen directamente al precio base', () => {
-      const data = {
-        cantidadPorCaja: 8,
-        tipoPreçioBase: 'unitarioMargen' as const,
-        precioBase: 12,
-        porcentajeGanancia: 50,
-        comisionMP: 3,
-        porcentajeCupon: 7,
-        tipoComisionCompraLinda: 'porcentaje' as const,
-        comisionCompraLinda: 12,
-        fleteTotal: 24
-      };
-
-      const result = calculateProductValues(data);
-      
-      // Costo unitario: 12 * 1.5 = 18
-      expect(result.costoUnitario).toBe(18);
-    });
+  it('should include IVA in unit cost', () => {
+    const data = {
+      ...baseProductData,
+      pctIVA: 21,
+    };
+    const result = calculateProduct(data);
+    // Costo base: 1000
+    // Flete unitario: 100
+    // IVA: 1000 * 0.21 = 210
+    // Total: 1310
+    expect(result.costos.costoUnitario).toBe(1310);
   });
 
-  describe('Comisión Compra Linda - Precio Fijo', () => {
-    test('debe aplicar comisión fija sin calcular porcentaje', () => {
-      const data = {
-        cantidadPorCaja: 6,
-        tipoPreçioBase: 'unitarioFijo' as const,
-        precioBase: 20,
-        porcentajeGanancia: 40,
-        comisionMP: 5,
-        porcentajeCupon: 10,
-        tipoComisionCompraLinda: 'precioFijo' as const,
-        comisionCompraLinda: 3.5,
-        fleteTotal: 12
-      };
-
-      const result = calculateProductValues(data);
-      
-      // Costo unitario: 20
-      // Flete unitario: 12/6 = 2
-      // Costo con flete: 20 + 2 = 22
-      // Precio con margen: 22 * 1.4 = 30.8
-      // Comisión CL fija: 3.5
-      // Precio con comisión: 30.8 + 3.5 = 34.3
-      // Comisión MP: 34.3 * 0.05 = 1.715
-      // Cupón: 34.3 * 0.10 = 3.43
-      // Precio final: 34.3 + 1.715 + 3.43 = 39.445
-      
-      expect(result.precioVenta).toBeCloseTo(39.45, 2);
-    });
+  it('should include shipping cost when absorbed', () => {
+    const data = {
+      ...baseProductData,
+      absorboEnvio: true,
+      costoEnvioUnitario: 75,
+    };
+    const result = calculateProduct(data);
+    // Costo base: 1000
+    // Flete unitario: 100
+    // Costo envío: 75
+    // Total: 1175
+    expect(result.costos.costoUnitario).toBe(1175);
   });
 
-  describe('Nueva Fórmula - Preservación de Ganancia', () => {
-    test('debe mantener exactamente la ganancia neta configurada después de comisiones', () => {
-      const data = {
-        cantidadPorCaja: 1,
-        tipoPreçioBase: 'unitarioFijo' as const,
-        precioBase: 10000, // $10.000 como en el ejemplo
-        porcentajeGanancia: 100, // 100% como en el ejemplo
-        comisionMP: 10,
-        porcentajeCupon: 0,
-        tipoComisionCompraLinda: 'porcentaje' as const,
-        comisionCompraLinda: 10,
-        fleteTotal: 0
-      };
+  it('should calculate cost with IVA and absorbed shipping', () => {
+    const data = {
+      ...baseProductData,
+      pctIVA: 21,
+      absorboEnvio: true,
+      costoEnvioUnitario: 50,
+    };
+    const result = calculateProduct(data);
+    // Costo base: 1000
+    // Flete unitario: 100
+    // Costo envío: 50
+    // IVA: 1000 * 0.21 = 210
+    // Total: 1360
+    expect(result.costos.costoUnitario).toBe(1360);
+  });
+});
 
-      const result = calculateProductValues(data);
-      
-      // Ejemplo del usuario:
-      // Precio base: $10.000
-      // % ganancia deseada: 100%
-      // % Mercado Pago: 10%
-      // % Compra Linda: 10%
-      // Ganancia neta esperada: $10.000 (100% sobre el costo)
-      
-      const costoBase = 10000;
-      const gananciaNeta = result.gananciaNeta || 0;
-      const porcentajeGananciaReal = (gananciaNeta / costoBase) * 100;
-      
-      // La ganancia neta debería ser aproximadamente 100% del costo base
-      expect(porcentajeGananciaReal).toBeCloseTo(100, 0);
-      expect(result.precioVenta).toBeCloseTo(25000, 0); // Precio esperado del ejemplo
-    });
+describe('productCalculations - Propio Mode Pricing', () => {
+  const baseProductData: ProductFormData = {
+    sku: 'TEST001',
+    nombre: 'Producto Test',
+    color: 'Azul',
+    cantidadPorCaja: 1,
+    tipoPrecio: 'unitario',
+    precioBase: 1000,
+    fleteTotal: 100,
+    costoEnvioUnitario: 0,
+    absorboEnvio: false,
+    modoProducto: 'propio',
+    pctGanancia: 30,
+    pctMP: 10,
+    pctCupon: 5,
+    clTipo: 'porcentaje',
+    pctCL: 2,
+    clFijo: 0,
+    pctIVA: 0,
+    pctDescTransfer: 10,
+    reglaRedondeo: 'none',
+  };
 
-    test('debe calcular el margen final como porcentaje de ganancia sobre precio de venta', () => {
-      const data = {
-        cantidadPorCaja: 2,
-        tipoPreçioBase: 'porCaja' as const,
-        precioBase: 40,
-        porcentajeGanancia: 100,
-        comisionMP: 0,
-        porcentajeCupon: 0,
-        tipoComisionCompraLinda: 'porcentaje' as const,
-        comisionCompraLinda: 0,
-        fleteTotal: 0
-      };
-
-      const result = calculateProductValues(data);
-      
-      // Costo unitario: 40/2 = 20
-      // Sin flete: 20
-      // Con margen: 20 * 2 = 40
-      // Sin comisiones: 40
-      // Ganancia neta: 40 - 20 = 20
-      // Margen final: (20/40) * 100 = 50%
-      
-      expect(result.margenFinal).toBeCloseTo(50, 2);
-    });
+  it('should calculate Web MP price for propio product', () => {
+    const result = calculateProduct(baseProductData);
+    // Costo unitario: 1100
+    // Ganancia deseada: 1100 * 0.30 = 330
+    // Subtotal: 1430
+    // Comisiones: 10% + 5% + 2% = 17%
+    // Precio Web MP: 1430 / (1 - 0.17) = 1430 / 0.83 ≈ 1722.89
+    expect(result.webMP.precio).toBeCloseTo(1722.89, 2);
   });
 
-  describe('Casos límite', () => {
-    test('debe manejar valores cero correctamente', () => {
-      const data = {
-        cantidadPorCaja: 1,
-        tipoPreçioBase: 'unitarioFijo' as const,
-        precioBase: 10,
-        porcentajeGanancia: 0,
-        comisionMP: 0,
-        porcentajeCupon: 0,
-        tipoComisionCompraLinda: 'porcentaje' as const,
-        comisionCompraLinda: 0,
-        fleteTotal: 0
-      };
+  it('should calculate Web Transfer price (subtotal with discount)', () => {
+    const result = calculateProduct(baseProductData);
+    // Subtotal: 1430
+    // Descuento transferencia: 10%
+    // Precio Web Transfer: 1430 * 0.9 = 1287
+    expect(result.webTransfer.precio).toBe(1287);
+  });
 
-      const result = calculateProductValues(data);
-      
-      expect(result.costoUnitario).toBe(10);
-      expect(result.precioVenta).toBe(10);
-      expect(result.gananciaNeta).toBe(0);
-      expect(result.margenFinal).toBe(0);
-    });
+  it('should calculate Marketplace price (subtotal without transfer discount)', () => {
+    const result = calculateProduct(baseProductData);
+    // Marketplace = Subtotal sin descuento de transferencia
+    // Subtotal: 1430
+    expect(result.webCupon.precio).toBe(1430);
+  });
 
-    test('debe manejar porcentajes altos correctamente', () => {
-      const data = {
-        cantidadPorCaja: 1,
-        tipoPreçioBase: 'unitarioFijo' as const,
-        precioBase: 100,
-        porcentajeGanancia: 200,
-        comisionMP: 15,
-        porcentajeCupon: 25,
-        tipoComisionCompraLinda: 'porcentaje' as const,
-        comisionCompraLinda: 20,
-        fleteTotal: 0
-      };
+  it('should calculate net profit and margin for Web MP', () => {
+    const result = calculateProduct(baseProductData);
+    // Precio Web MP: ~1722.89
+    // Comisión MP: 1722.89 * 0.10 = 172.29
+    // Cupón: 1722.89 * 0.05 = 86.14
+    // Comisión CL: 1722.89 * 0.02 = 34.46
+    // Ganancia neta: 1722.89 - 1100 - 172.29 - 86.14 - 34.46 = 330
+    // Margen: (330 / 1722.89) * 100 ≈ 19.15%
+    expect(result.webMP.gananciaNeta).toBeCloseTo(330, 2);
+    expect(result.webMP.margenPct).toBeCloseTo(19.15, 2);
+  });
 
-      const result = calculateProductValues(data);
-      
-      // Verificar que no hay errores de cálculo con porcentajes altos
-      expect(result.precioVenta).toBeGreaterThan(result.costoUnitario);
-      expect(result.margenFinal).toBeGreaterThan(0);
-    });
+  it('should calculate net profit for Web Transfer (no commissions)', () => {
+    const result = calculateProduct(baseProductData);
+    // Precio Web Transfer: 1287
+    // Ganancia neta: 1287 - 1100 = 187
+    // Margen: (187 / 1287) * 100 ≈ 14.53%
+    expect(result.webTransfer.gananciaNeta).toBe(187);
+    expect(result.webTransfer.margenPct).toBeCloseTo(14.53, 2);
+  });
+
+  it('should work with fixed CL commission', () => {
+    const data = {
+      ...baseProductData,
+      clTipo: 'fijo' as const,
+      clFijo: 100,
+      pctCL: 0,
+    };
+    const result = calculateProduct(data);
+    // Comisiones: 10% + 5% = 15% (CL fijo se suma después)
+    // Precio Web MP: 1430 / 0.85 ≈ 1682.35
+    // Ganancia neta: 1682.35 - 1100 - 168.24 - 84.12 - 100 = 230
+    expect(result.webMP.precio).toBeCloseTo(1682.35, 2);
+    expect(result.webMP.gananciaNeta).toBeCloseTo(230, 2);
+  });
+});
+
+describe('productCalculations - Tercero Mode Pricing', () => {
+  const baseProductData: ProductFormData = {
+    sku: 'TEST001',
+    nombre: 'Producto Test',
+    color: 'Azul',
+    cantidadPorCaja: 1,
+    tipoPrecio: 'unitario',
+    precioBase: 1000,
+    fleteTotal: 100,
+    costoEnvioUnitario: 0,
+    absorboEnvio: false,
+    modoProducto: 'tercero',
+    pctGanancia: 30,
+    pctMP: 10,
+    pctCupon: 5,
+    clTipo: 'porcentaje',
+    pctCL: 3,
+    clFijo: 0,
+    pctIVA: 0,
+    pctDescTransfer: 10,
+    reglaRedondeo: 'none',
+  };
+
+  it('should calculate Web MP price with CL as income', () => {
+    const result = calculateProduct(baseProductData);
+    // Subtotal: 1430
+    // Precio sin MP/Cupón: 1430 / (1 - 0.10 - 0.05) = 1430 / 0.85 ≈ 1682.35
+    // Ingreso CL: 1682.35 * 0.03 ≈ 50.47
+    // Precio Web MP: 1682.35 + 50.47 ≈ 1732.82
+    expect(result.webMP.precio).toBeCloseTo(1732.82, 2);
+  });
+
+  it('should calculate net profit with CL as income', () => {
+    const result = calculateProduct(baseProductData);
+    // Precio: ~1732.82
+    // Comisión MP: 1732.82 * 0.10 = 173.28
+    // Cupón: 1732.82 * 0.05 = 86.64
+    // Ingreso CL: 1732.82 * 0.03 = 51.98
+    // Ganancia neta: (1732.82 - 173.28 - 86.64) - 1100 + 51.98 ≈ 424.88
+    expect(result.webMP.gananciaNeta).toBeCloseTo(424.88, 2);
+  });
+
+  it('should work with fixed CL as income', () => {
+    const data = {
+      ...baseProductData,
+      clTipo: 'fijo' as const,
+      clFijo: 150,
+      pctCL: 0,
+    };
+    const result = calculateProduct(data);
+    // Precio sin MP/Cupón: 1430 / 0.85 ≈ 1682.35
+    // Precio Web MP: 1682.35 + 150 = 1832.35
+    expect(result.webMP.precio).toBeCloseTo(1832.35, 2);
+  });
+});
+
+describe('productCalculations - Rounding Effects', () => {
+  const baseProductData: ProductFormData = {
+    sku: 'TEST001',
+    nombre: 'Producto Test',
+    color: 'Azul',
+    cantidadPorCaja: 1,
+    tipoPrecio: 'unitario',
+    precioBase: 1000,
+    fleteTotal: 100,
+    costoEnvioUnitario: 0,
+    absorboEnvio: false,
+    modoProducto: 'propio',
+    pctGanancia: 30,
+    pctMP: 10,
+    pctCupon: 5,
+    clTipo: 'porcentaje',
+    pctCL: 2,
+    clFijo: 0,
+    pctIVA: 0,
+    pctDescTransfer: 10,
+    reglaRedondeo: 'none',
+  };
+
+  it('should apply rounding to all prices', () => {
+    const data = { ...baseProductData, reglaRedondeo: '100' as const };
+    const result = calculateProduct(data);
+    
+    expect(result.webMP.precio % 100).toBe(0);
+    expect(result.webTransfer.precio % 100).toBe(0);
+    expect(result.webCupon.precio % 100).toBe(0);
+  });
+
+  it('should recalculate margins after rounding', () => {
+    const dataNoRound = { ...baseProductData, reglaRedondeo: 'none' as const };
+    const data100 = { ...baseProductData, reglaRedondeo: '100' as const };
+    
+    const resultNoRound = calculateProduct(dataNoRound);
+    const result100 = calculateProduct(data100);
+    
+    // Margins should be different after rounding
+    expect(resultNoRound.webMP.margenPct).not.toBe(result100.webMP.margenPct);
+  });
+});
+
+describe('productCalculations - Validation', () => {
+  const baseProductData: ProductFormData = {
+    sku: 'TEST001',
+    nombre: 'Producto Test',
+    color: 'Azul',
+    cantidadPorCaja: 1,
+    tipoPrecio: 'unitario',
+    precioBase: 1000,
+    fleteTotal: 100,
+    costoEnvioUnitario: 0,
+    absorboEnvio: false,
+    modoProducto: 'propio',
+    pctGanancia: 30,
+    pctMP: 10,
+    pctCupon: 5,
+    clTipo: 'porcentaje',
+    pctCL: 2,
+    clFijo: 0,
+    pctIVA: 0,
+    pctDescTransfer: 10,
+    reglaRedondeo: 'none',
+  };
+
+  it('should pass validation with valid data', () => {
+    const error = validateProductData(baseProductData);
+    expect(error).toBeNull();
+  });
+
+  it('should fail validation when propio commissions >= 100%', () => {
+    const data = {
+      ...baseProductData,
+      pctMP: 50,
+      pctCupon: 30,
+      pctCL: 20,
+    };
+    const error = validateProductData(data);
+    expect(error).toBeTruthy();
+    expect(error).toContain('100%');
+  });
+
+  it('should allow high commissions for tercero mode', () => {
+    const data = {
+      ...baseProductData,
+      modoProducto: 'tercero' as const,
+      pctMP: 50,
+      pctCupon: 30,
+      pctCL: 20,
+    };
+    const error = validateProductData(data);
+    expect(error).toBeNull();
+  });
+
+  it('should not count fixed CL in percentage validation', () => {
+    const data = {
+      ...baseProductData,
+      clTipo: 'fijo' as const,
+      pctMP: 50,
+      pctCupon: 49,
+      pctCL: 0,
+      clFijo: 1000,
+    };
+    const error = validateProductData(data);
+    expect(error).toBeNull();
+  });
+});
+
+describe('productCalculations - Edge Cases', () => {
+  it('should handle zero profit margin', () => {
+    const data: ProductFormData = {
+      sku: 'TEST001',
+      nombre: 'Producto Test',
+      color: 'Azul',
+      cantidadPorCaja: 1,
+      tipoPrecio: 'unitario',
+      precioBase: 1000,
+      fleteTotal: 0,
+      costoEnvioUnitario: 0,
+      absorboEnvio: false,
+      modoProducto: 'propio',
+      pctGanancia: 0,
+      pctMP: 10,
+      pctCupon: 5,
+      clTipo: 'porcentaje',
+      pctCL: 2,
+      clFijo: 0,
+      pctIVA: 0,
+      pctDescTransfer: 10,
+      reglaRedondeo: 'none',
+    };
+    const result = calculateProduct(data);
+    expect(result.costos.costoUnitario).toBe(1000);
+  });
+
+  it('should handle high profit margin (500%)', () => {
+    const data: ProductFormData = {
+      sku: 'TEST001',
+      nombre: 'Producto Test',
+      color: 'Azul',
+      cantidadPorCaja: 1,
+      tipoPrecio: 'unitario',
+      precioBase: 1000,
+      fleteTotal: 100,
+      costoEnvioUnitario: 0,
+      absorboEnvio: false,
+      modoProducto: 'propio',
+      pctGanancia: 500,
+      pctMP: 10,
+      pctCupon: 5,
+      clTipo: 'porcentaje',
+      pctCL: 2,
+      clFijo: 0,
+      pctIVA: 0,
+      pctDescTransfer: 10,
+      reglaRedondeo: 'none',
+    };
+    const result = calculateProduct(data);
+    // Costo: 1100
+    // Ganancia deseada: 1100 * 5 = 5500
+    // Subtotal: 6600
+    expect(result.webMP.gananciaNeta).toBeCloseTo(5500, 0);
+  });
+
+  it('should handle multiple items per box', () => {
+    const data: ProductFormData = {
+      sku: 'TEST001',
+      nombre: 'Producto Test',
+      color: 'Azul',
+      cantidadPorCaja: 12,
+      tipoPrecio: 'caja',
+      precioBase: 12000,
+      fleteTotal: 600,
+      costoEnvioUnitario: 0,
+      absorboEnvio: false,
+      modoProducto: 'propio',
+      pctGanancia: 30,
+      pctMP: 10,
+      pctCupon: 5,
+      clTipo: 'porcentaje',
+      pctCL: 2,
+      clFijo: 0,
+      pctIVA: 0,
+      pctDescTransfer: 10,
+      reglaRedondeo: 'none',
+    };
+    const result = calculateProduct(data);
+    // Costo unitario: 12000/12 = 1000
+    // Flete unitario: 600/12 = 50
+    // Total: 1050
+    expect(result.costos.costoUnitario).toBe(1050);
+    expect(result.costos.fleteUnitario).toBe(50);
+  });
+});
+
+describe('productCalculations - Transfer Discount Independence', () => {
+  const baseProductData: ProductFormData = {
+    sku: 'TEST001',
+    nombre: 'Producto Test',
+    color: 'Azul',
+    cantidadPorCaja: 1,
+    tipoPrecio: 'unitario',
+    precioBase: 1000,
+    fleteTotal: 100,
+    costoEnvioUnitario: 0,
+    absorboEnvio: false,
+    modoProducto: 'propio',
+    pctGanancia: 30,
+    pctMP: 10,
+    pctCupon: 5,
+    clTipo: 'porcentaje',
+    pctCL: 2,
+    clFijo: 0,
+    pctIVA: 0,
+    pctDescTransfer: 10,
+    reglaRedondeo: 'none',
+  };
+
+  it('should not apply transfer discount to Marketplace price', () => {
+    const result = calculateProduct(baseProductData);
+    // Subtotal: 1430
+    // Marketplace debe ser igual al subtotal (sin descuento de transferencia)
+    // Web Transfer debe tener el descuento: 1430 * 0.9 = 1287
+    expect(result.webCupon.precio).toBe(1430);
+    expect(result.webTransfer.precio).toBe(1287);
+    expect(result.webCupon.precio).toBeGreaterThan(result.webTransfer.precio);
+  });
+
+  it('should only apply transfer discount to Web Transfer channel', () => {
+    const dataWithHighDiscount = {
+      ...baseProductData,
+      pctDescTransfer: 20,
+    };
+    const result = calculateProduct(dataWithHighDiscount);
+    // Subtotal: 1430
+    // Web Transfer: 1430 * 0.8 = 1144
+    // Marketplace: 1430 (sin descuento)
+    expect(result.webTransfer.precio).toBe(1144);
+    expect(result.webCupon.precio).toBe(1430);
   });
 });

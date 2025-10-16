@@ -337,13 +337,22 @@ export const useProductStore = create<ProductStore>((set, get) => ({
           const updateData: any = {};
           if (change.data) {
             const data = change.data as Partial<ProductFormData>;
+            // Basic fields
+            if (data.nombre !== undefined) updateData.nombre = data.nombre;
+            if (data.sku !== undefined) updateData.sku = data.sku;
+            if (data.color !== undefined) updateData.color = data.color;
+            if (data.cantidadPorCaja !== undefined) updateData.cantidad_por_caja = data.cantidadPorCaja;
+            if (data.tipoPrecio !== undefined) updateData.tipo_precio_base = data.tipoPrecio === 'unitario' ? 'unitarioFijo' : 'porCaja';
+            if (data.precioBase !== undefined) updateData.precio_base = data.precioBase;
+            if (data.fleteTotal !== undefined) updateData.flete_total = data.fleteTotal;
+            // Commission fields
             if (data.pctGanancia !== undefined) updateData.porcentaje_ganancia = data.pctGanancia;
             if (data.pctMP !== undefined) updateData.comision_mp = data.pctMP;
             if (data.pctCupon !== undefined) updateData.porcentaje_cupon = data.pctCupon;
+            if (data.clTipo !== undefined) updateData.tipo_comision_compra_linda = data.clTipo === 'porcentaje' ? 'porcentaje' : 'precioFijo';
             if (data.pctCL !== undefined || data.clFijo !== undefined) {
               updateData.comision_compra_linda = data.pctCL || data.clFijo || 0;
             }
-            if (data.precioBase !== undefined) updateData.precio_base = data.precioBase;
           }
           
           await supabase
