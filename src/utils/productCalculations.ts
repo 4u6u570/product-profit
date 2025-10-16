@@ -36,7 +36,17 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
     : data.precioBase / data.cantidadPorCaja;
 
   // 2. Calcular flete unitario
-  const fleteUnitario = data.fleteTotal / data.cantidadPorCaja;
+  let fleteUnitario: number;
+  
+  if (data.modoProrrateoFlete === 'proporcional' && data.preciosIndividuales && data.preciosIndividuales.length > 0) {
+    // Modo proporcional: calcular el peso del producto actual
+    const sumaPreciosBase = data.preciosIndividuales.reduce((sum, precio) => sum + precio, 0);
+    const pesoProducto = sumaPreciosBase > 0 ? costoUnitarioBase / sumaPreciosBase : 1 / data.cantidadPorCaja;
+    fleteUnitario = pesoProducto * data.fleteTotal;
+  } else {
+    // Modo uniforme (por defecto)
+    fleteUnitario = data.fleteTotal / data.cantidadPorCaja;
+  }
 
   // 3. Calcular IVA sobre precio base
   const costoIVA = (data.pctIVA || 0) > 0 ? costoUnitarioBase * ((data.pctIVA || 0) / 100) : 0;

@@ -7,6 +7,8 @@ export interface Product {
   tipoPrecio: 'unitario' | 'caja';
   precioBase: number;
   fleteTotal: number;
+  modoProrrateoFlete: 'uniforme' | 'proporcional';
+  preciosIndividuales?: number[];
   absorboEnvio: boolean;
   costoEnvioUnitario?: number;
   modoProducto: 'propio' | 'tercero';
@@ -61,6 +63,8 @@ export interface ProductFormData {
   tipoPrecio: 'unitario' | 'caja';
   precioBase: number;
   fleteTotal: number;
+  modoProrrateoFlete: 'uniforme' | 'proporcional';
+  preciosIndividuales?: number[];
   absorboEnvio: boolean;
   costoEnvioUnitario?: number;
   modoProducto: 'propio' | 'tercero';

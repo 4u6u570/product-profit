@@ -98,6 +98,8 @@ export const useProductStore = create<ProductStore>((set, get) => ({
           tipoPrecio: row.tipo_precio_base === 'unitarioFijo' ? 'unitario' : 'caja',
           precioBase: Number(row.precio_base),
           fleteTotal: Number(row.flete_total),
+          modoProrrateoFlete: 'uniforme',
+          preciosIndividuales: [],
           absorboEnvio: false, // Will be updated when schema matches
           costoEnvioUnitario: undefined,
           modoProducto: 'propio', // Will be updated when schema matches
@@ -210,6 +212,8 @@ export const useProductStore = create<ProductStore>((set, get) => ({
               tipoPrecio: updatedProduct.tipoPrecio,
               precioBase: updatedProduct.precioBase,
               fleteTotal: updatedProduct.fleteTotal,
+              modoProrrateoFlete: updatedProduct.modoProrrateoFlete || 'uniforme',
+              preciosIndividuales: updatedProduct.preciosIndividuales || [],
               absorboEnvio: updatedProduct.absorboEnvio,
               costoEnvioUnitario: updatedProduct.costoEnvioUnitario,
               modoProducto: updatedProduct.modoProducto,

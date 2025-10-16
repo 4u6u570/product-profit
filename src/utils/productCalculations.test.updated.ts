@@ -11,6 +11,7 @@ describe('Product Calculations with IVA Integration', () => {
     tipoPrecio: 'unitario',
     precioBase: 1000,
     fleteTotal: 100,
+    modoProrrateoFlete: 'uniforme',
     costoEnvioUnitario: 50,
     absorboEnvio: false,
     modoProducto: 'propio',

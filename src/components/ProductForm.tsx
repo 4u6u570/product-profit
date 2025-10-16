@@ -25,6 +25,8 @@ const formSchema = z.object({
   tipoPrecio: z.enum(['unitario', 'caja']),
   precioBase: z.number().min(0.01, 'El precio base es obligatorio y debe ser mayor a 0'),
   fleteTotal: z.number().min(0, 'El flete total debe ser mayor o igual a 0'),
+  modoProrrateoFlete: z.enum(['uniforme', 'proporcional']),
+  preciosIndividuales: z.array(z.number()).optional(),
   costoEnvioUnitario: z.number().min(0, 'El costo de envío debe ser mayor o igual a 0').optional(),
   absorboEnvio: z.boolean(),
   modoProducto: z.enum(['propio', 'tercero']),
@@ -62,6 +64,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
       tipoPrecio: 'unitario',
       precioBase: 0,
       fleteTotal: 0,
+      modoProrrateoFlete: 'uniforme',
+      preciosIndividuales: [],
       costoEnvioUnitario: 2500,
       absorboEnvio: false,
       modoProducto: 'propio',
@@ -89,6 +93,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
         tipoPrecio: productToEdit.tipoPrecio,
         precioBase: productToEdit.precioBase,
         fleteTotal: productToEdit.fleteTotal,
+        modoProrrateoFlete: productToEdit.modoProrrateoFlete || 'uniforme',
+        preciosIndividuales: productToEdit.preciosIndividuales || [],
         costoEnvioUnitario: productToEdit.costoEnvioUnitario || 0,
         absorboEnvio: productToEdit.absorboEnvio,
         modoProducto: productToEdit.modoProducto,
@@ -304,6 +310,93 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
           </div>
         </div>
 
+        {/* Modo de Prorrateo de Flete */}
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="modoProrrateoFlete">Modo de prorrateo del flete</Label>
+            <Select 
+              onValueChange={(value) => form.setValue('modoProrrateoFlete', value as 'uniforme' | 'proporcional')} 
+              value={watchedValues.modoProrrateoFlete}
+            >
+              <SelectTrigger className="h-12 md:h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="uniforme">🔘 Uniforme (divide por cantidad)</SelectItem>
+                <SelectItem value="proporcional">⚪ Proporcional al costo de cada producto</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              {watchedValues.modoProrrateoFlete === 'uniforme' 
+                ? 'El flete se divide uniformemente entre todos los productos' 
+                : 'El flete se distribuye proporcionalmente según el precio base de cada producto'}
+            </p>
+          </div>
+
+          {/* Tabla de precios individuales - solo visible en modo proporcional */}
+          {watchedValues.modoProrrateoFlete === 'proporcional' && (
+            <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-sm">Precios base de productos en la caja</h4>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const current = form.getValues('preciosIndividuales') || [];
+                    form.setValue('preciosIndividuales', [...current, 0]);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Agregar
+                </Button>
+              </div>
+              
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {(watchedValues.preciosIndividuales || []).map((precio, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Label className="w-24 text-xs">Producto {index + 1}</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={precio}
+                      onChange={(e) => {
+                        const current = form.getValues('preciosIndividuales') || [];
+                        const newValue = parseFloat(e.target.value) || 0;
+                        current[index] = newValue;
+                        form.setValue('preciosIndividuales', [...current]);
+                      }}
+                      className="flex-1 h-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const current = form.getValues('preciosIndividuales') || [];
+                        form.setValue('preciosIndividuales', current.filter((_, i) => i !== index));
+                      }}
+                    >
+                      ✕
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              
+              {(watchedValues.preciosIndividuales || []).length > 0 && (
+                <div className="pt-2 border-t border-border">
+                  <div className="flex justify-between text-sm font-semibold">
+                    <span>Total precios base:</span>
+                    <span>
+                      {formatCurrency((watchedValues.preciosIndividuales || []).reduce((sum, p) => sum + p, 0))}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Configuración de Producto */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
@@ -318,40 +411,42 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               </SelectContent>
             </Select>
           </div>
-          <div className="flex flex-col justify-between">
-            <Label>¿Absorbo envío?</Label>
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={watchedValues.absorboEnvio}
-                onCheckedChange={(checked) => form.setValue('absorboEnvio', checked)}
-              />
-              <span className="text-sm text-muted-foreground">
-                {watchedValues.absorboEnvio ? 'Sí' : 'No'}
-              </span>
+          <div className="space-y-3">
+            <div className="flex flex-col justify-between">
+              <Label>¿Absorbo envío?</Label>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={watchedValues.absorboEnvio}
+                  onCheckedChange={(checked) => form.setValue('absorboEnvio', checked)}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {watchedValues.absorboEnvio ? 'Sí' : 'No'}
+                </span>
+              </div>
             </div>
-          </div>
-          <div>
-            <Label htmlFor="costoEnvioUnitario">Costo envío local absorbido</Label>
-            <Input
-              id="costoEnvioUnitario"
-              type="number"
-              step="0.01"
-              placeholder="2500"
-              className="h-12 md:h-10 text-base md:text-sm"
-              disabled={!watchedValues.absorboEnvio}
-              {...form.register('costoEnvioUnitario', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 0) {
-                    form.setValue('costoEnvioUnitario', 0);
-                  }
-                }
-              })}
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {watchedValues.absorboEnvio ? 'Monto que se suma al costo unitario' : 'Activa "¿Absorbo envío?" para editar'}
-            </p>
+            
+            {watchedValues.absorboEnvio && (
+              <div>
+                <Label htmlFor="costoEnvioUnitario">Monto de envío absorbido</Label>
+                <Input
+                  id="costoEnvioUnitario"
+                  type="number"
+                  step="0.01"
+                  placeholder="2500"
+                  className="h-12 md:h-10 text-base md:text-sm"
+                  {...form.register('costoEnvioUnitario', { 
+                    valueAsNumber: true,
+                    onChange: (e) => {
+                      const value = parseFloat(e.target.value);
+                      if (isNaN(value) || value < 0) {
+                        form.setValue('costoEnvioUnitario', 0);
+                      }
+                    }
+                  })}
+                />
+                <p className="text-xs text-muted-foreground mt-1">Monto que se suma al costo unitario</p>
+              </div>
+            )}
           </div>
         </div>
 
