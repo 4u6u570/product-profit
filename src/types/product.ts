@@ -53,6 +53,7 @@ export interface Product {
   updatedAt: string;
   pinned?: boolean;
   selected?: boolean;
+  version_calculadora?: string;
 }
 
 export interface ProductFormData {

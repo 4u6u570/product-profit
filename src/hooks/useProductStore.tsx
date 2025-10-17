@@ -170,7 +170,8 @@ export const useProductStore = create<ProductStore>((set, get) => ({
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       pinned: false,
-      selected: false
+      selected: false,
+      version_calculadora: 'v2.2'
     };
 
     // Add to local state immediately

@@ -16,6 +16,7 @@ import { calculateProduct, validateProductData } from '@/utils/productCalculatio
 import { formatCurrency, formatNumber } from '@/utils/formatting';
 import { useProductStore } from '@/hooks/useProductStore';
 import { useGroup } from '@/hooks/useGroup';
+import { AdvancedPreviewModal } from './AdvancedPreviewModal';
 
 const formSchema = z.object({
   sku: z.string().optional(),
@@ -128,13 +129,11 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
     }
   }, [watchedValues]);
 
+  const [showAdvancedPreview, setShowAdvancedPreview] = useState(false);
+
   const handlePreview = () => {
     if (!preview) return;
-    
-    toast({
-      title: "Vista previa calculada",
-      description: `Precio Web MP: ${formatCurrency(preview.webMP.precio)}`,
-    });
+    setShowAdvancedPreview(true);
   };
 
   const handleAddToList = async () => {
@@ -193,18 +192,27 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
   };
 
   return (
-    <Card className="h-fit shadow-lg border-0 bg-gradient-to-br from-card to-muted/20">
-      <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2">
-          <Calculator className="h-6 w-6 text-primary" />
-          {isEditing ? 'Editar Producto' : 'Crear Producto'}
-        </CardTitle>
-        {isEditing && (
-          <p className="text-sm text-muted-foreground">
-            Editando: {productToEdit?.nombre}
-          </p>
-        )}
-      </CardHeader>
+    <>
+      <AdvancedPreviewModal
+        open={showAdvancedPreview}
+        onClose={() => setShowAdvancedPreview(false)}
+        currentFormData={watchedValues}
+        currentPreview={preview}
+        productVersion={productToEdit?.version_calculadora}
+      />
+      
+      <Card className="h-fit shadow-lg border-0 bg-gradient-to-br from-card to-muted/20">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Calculator className="h-6 w-6 text-primary" />
+            {isEditing ? 'Editar Producto' : 'Crear Producto'}
+          </CardTitle>
+          {isEditing && (
+            <p className="text-sm text-muted-foreground">
+              Editando: {productToEdit?.nombre}
+            </p>
+          )}
+        </CardHeader>
       <CardContent className="space-y-6">
         {/* Información Básica */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-4">{/* Mejor espaciado en móvil */}
@@ -669,6 +677,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
           </Button>
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </>
   );
 }
