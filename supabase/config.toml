@@ -1,1 +1,4 @@
 project_id = "odnnrqjddkxbxstxyleu"
+
+[functions.simulate-activity]
+verify_jwt = false

@@ -7,13 +7,40 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          success: boolean | null
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          success?: boolean | null
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          success?: boolean | null
+        }
+        Relationships: []
+      }
       grupo_miembros: {
         Row: {
           created_at: string | null
@@ -164,14 +191,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      ensure_user_in_default_group: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      get_user_group: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      ensure_user_in_default_group: { Args: never; Returns: undefined }
+      get_user_group: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never

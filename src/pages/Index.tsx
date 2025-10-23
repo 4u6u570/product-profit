@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CalculatorPage from './Calculator';
 import { useAuth } from '@/hooks/useAuth';
+import { ActivityFooter } from '@/components/ActivityFooter';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -25,7 +26,12 @@ const Index = () => {
     return null;
   }
 
-  return <CalculatorPage />;
+  return (
+    <>
+      <CalculatorPage />
+      <ActivityFooter />
+    </>
+  );
 };
 
 export default Index;
