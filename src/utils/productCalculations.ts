@@ -55,38 +55,43 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
   const costoEnvio = data.absorboEnvio ? (data.costoEnvioUnitario || 0) : 0;
   const costoUnitario = costoUnitarioBase + fleteUnitario + costoIVA + costoEnvio;
 
-  // 5. Aplicar factores de forma secuencial y multiplicativa
-  // PrecioFinal = CostoUnitario × (1 + %Ganancia) × (1 + %MP) × (1 + %Cupón) × (1 + ComisiónCL)
+  // 5. Calcular ganancia deseada
+  const gananciaDeseada = costoUnitario * (data.pctGanancia / 100);
+  const subtotal = costoUnitario + gananciaDeseada;
+
   let precioWebMPBruto: number;
 
   if (data.modoProducto === 'propio') {
-    // Producto propio: aplicar todos los factores multiplicativamente
-    const factorGanancia = 1 + (data.pctGanancia / 100);
-    const factorMP = 1 + (data.pctMP / 100);
-    const factorCupon = 1 + (data.pctCupon / 100);
-    const factorCL = data.clTipo === 'porcentaje' 
-      ? 1 + ((data.pctCL || 0) / 100)
-      : 1;
-
-    precioWebMPBruto = costoUnitario * factorGanancia * factorMP * factorCupon * factorCL;
+    // PRODUCTO PROPIO: aplicar gross-up combinado sobre MP + Cupón + CL
+    const comisionCLPorcentaje = data.clTipo === 'porcentaje' 
+      ? (data.pctCL || 0)
+      : (data.clFijo || 0) / subtotal * 100;
     
-    // Si CL es fijo, sumarlo al final
-    if (data.clTipo === 'fijo') {
-      precioWebMPBruto += (data.clFijo || 0);
+    const comisionesTotales = (data.pctMP + data.pctCupon + comisionCLPorcentaje) / 100;
+    
+    if (comisionesTotales >= 1) {
+      // Prevenir división por cero
+      precioWebMPBruto = subtotal * 2;
+    } else {
+      precioWebMPBruto = subtotal / (1 - comisionesTotales);
     }
   } else {
-    // Producto de tercero: aplicar ganancia, MP, cupón y luego sumar CL como ingreso
-    const factorGanancia = 1 + (data.pctGanancia / 100);
-    const factorMP = 1 + (data.pctMP / 100);
-    const factorCupon = 1 + (data.pctCupon / 100);
-
-    const precioBase = costoUnitario * factorGanancia * factorMP * factorCupon;
+    // PRODUCTO DE TERCERO: gross-up combinado sobre MP + Cupón, luego sumar CL
+    const comisionesMPCupon = (data.pctMP + data.pctCupon) / 100;
     
-    const ingresoCL = data.clTipo === 'fijo' 
-      ? (data.clFijo || 0)
-      : precioBase * ((data.pctCL || 0) / 100);
+    let precioSinMPCupon: number;
+    if (comisionesMPCupon >= 1) {
+      precioSinMPCupon = subtotal * 2;
+    } else {
+      precioSinMPCupon = subtotal / (1 - comisionesMPCupon);
+    }
 
-    precioWebMPBruto = precioBase + ingresoCL;
+    // Agregar CL (fijo o %)
+    if (data.clTipo === 'fijo') {
+      precioWebMPBruto = precioSinMPCupon + (data.clFijo || 0);
+    } else {
+      precioWebMPBruto = precioSinMPCupon + (precioSinMPCupon * ((data.pctCL || 0) / 100));
+    }
   }
 
   // 6. Aplicar redondeo al precio Web MP
@@ -108,10 +113,9 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
       return { gananciaNeta, margenPct };
     }
 
-    // Para Web MP, las comisiones ya están incorporadas en el precio inflado
-    // La ganancia real es el precio menos el costo y menos todas las comisiones
-    const comisionMP = precio / (1 + (data.pctMP / 100) + (data.pctCupon / 100)) * (data.pctMP / 100);
-    const cupon = precio / (1 + (data.pctMP / 100) + (data.pctCupon / 100)) * (data.pctCupon / 100);
+    // Para Web MP, las comisiones se calculan sobre el precio final (gross-up combinado)
+    const comisionMP = precio * (data.pctMP / 100);
+    const cupon = precio * (data.pctCupon / 100);
     
     let comisionCL = 0;
     if (data.modoProducto === 'propio') {
