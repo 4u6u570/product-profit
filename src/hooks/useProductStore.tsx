@@ -153,6 +153,35 @@ export const useProductStore = create<ProductStore>((set, get) => ({
 
       get().saveToLocalStorage();
 
+      // Create initial price history for products without history
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        for (const product of mergedProducts) {
+          // Check if product already has history
+          const { data: existingHistory } = await supabase
+            .from('product_price_history')
+            .select('id')
+            .eq('product_id', product.id)
+            .limit(1);
+
+          // If no history exists, create initial record
+          if (!existingHistory || existingHistory.length === 0) {
+            await supabase.from('product_price_history').insert({
+              product_id: product.id,
+              user_id: user.id,
+              grupo_id: groupId,
+              precio_base: product.precioBase,
+              web_mp: product.webMP.precio,
+              web_transfer: product.webTransfer.precio,
+              marketplace: product.webCupon?.precio || null,
+              pct_ganancia: product.pctGanancia,
+              pct_cupon: product.pctCupon,
+              pct_mp: product.pctMP,
+            });
+          }
+        }
+      }
+
       // Sync any unsynced changes
       await get().syncToSupabase(groupId);
       
@@ -199,7 +228,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
           precio_base: newProduct.precioBase,
           web_mp: newProduct.webMP.precio,
           web_transfer: newProduct.webTransfer.precio,
-          marketplace: newProduct.marketplace?.precio || null,
+          marketplace: newProduct.webCupon?.precio || null,
           pct_ganancia: newProduct.pctGanancia,
           pct_cupon: newProduct.pctCupon,
           pct_mp: newProduct.pctMP,
@@ -280,7 +309,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
               precio_base: updatedProduct.precioBase,
               web_mp: updatedProduct.webMP.precio,
               web_transfer: updatedProduct.webTransfer.precio,
-              marketplace: updatedProduct.marketplace?.precio || null,
+              marketplace: updatedProduct.webCupon?.precio || null,
               pct_ganancia: updatedProduct.pctGanancia,
               pct_cupon: updatedProduct.pctCupon,
               pct_mp: updatedProduct.pctMP,
