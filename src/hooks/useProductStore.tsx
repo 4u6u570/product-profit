@@ -188,16 +188,35 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     // Try to sync to Supabase
     try {
       await get().syncToSupabase(groupId);
+      
+      // Save initial price history
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('product_price_history').insert({
+          product_id: newProduct.id,
+          user_id: user.id,
+          grupo_id: groupId,
+          precio_base: newProduct.precioBase,
+          web_mp: newProduct.webMP.precio,
+          web_transfer: newProduct.webTransfer.precio,
+          marketplace: newProduct.marketplace?.precio || null,
+          pct_ganancia: newProduct.pctGanancia,
+          pct_cupon: newProduct.pctCupon,
+          pct_mp: newProduct.pctMP,
+        });
+      }
     } catch (error) {
       console.error('Error syncing new product:', error);
     }
   },
 
   updateProduct: async (id: string, formData: Partial<ProductFormData>, groupId?: string) => {
+    let updatedProduct: Product | null = null;
+
     set(state => ({
       products: state.products.map(product => {
         if (product.id === id) {
-          const updatedProduct = {
+          const updated = {
             ...product,
             ...formData,
             updatedAt: new Date().toISOString()
@@ -206,33 +225,34 @@ export const useProductStore = create<ProductStore>((set, get) => ({
           // Recalculate if necessary fields changed
           if (formData.precioBase || formData.pctGanancia || formData.pctMP || formData.pctCupon || formData.pctIVA || formData.pctCL || formData.clFijo || formData.pctDescTransfer) {
             const fullFormData: ProductFormData = {
-              sku: updatedProduct.sku,
-              nombre: updatedProduct.nombre,
-              color: updatedProduct.color,
-              cantidadPorCaja: updatedProduct.cantidadPorCaja,
-              tipoPrecio: updatedProduct.tipoPrecio,
-              precioBase: updatedProduct.precioBase,
-              fleteTotal: updatedProduct.fleteTotal,
-              modoProrrateoFlete: updatedProduct.modoProrrateoFlete || 'uniforme',
-              preciosIndividuales: updatedProduct.preciosIndividuales || [],
-              absorboEnvio: updatedProduct.absorboEnvio,
-              costoEnvioUnitario: updatedProduct.costoEnvioUnitario,
-              modoProducto: updatedProduct.modoProducto,
-              pctGanancia: updatedProduct.pctGanancia,
-              pctMP: updatedProduct.pctMP,
-              pctCupon: updatedProduct.pctCupon,
-              clTipo: updatedProduct.clTipo,
-              pctCL: updatedProduct.pctCL,
-              clFijo: updatedProduct.clFijo,
-              pctIVA: updatedProduct.pctIVA,
-              pctDescTransfer: updatedProduct.pctDescTransfer,
-              reglaRedondeo: updatedProduct.reglaRedondeo
+              sku: updated.sku,
+              nombre: updated.nombre,
+              color: updated.color,
+              cantidadPorCaja: updated.cantidadPorCaja,
+              tipoPrecio: updated.tipoPrecio,
+              precioBase: updated.precioBase,
+              fleteTotal: updated.fleteTotal,
+              modoProrrateoFlete: updated.modoProrrateoFlete || 'uniforme',
+              preciosIndividuales: updated.preciosIndividuales || [],
+              absorboEnvio: updated.absorboEnvio,
+              costoEnvioUnitario: updated.costoEnvioUnitario,
+              modoProducto: updated.modoProducto,
+              pctGanancia: updated.pctGanancia,
+              pctMP: updated.pctMP,
+              pctCupon: updated.pctCupon,
+              clTipo: updated.clTipo,
+              pctCL: updated.pctCL,
+              clFijo: updated.clFijo,
+              pctIVA: updated.pctIVA,
+              pctDescTransfer: updated.pctDescTransfer,
+              reglaRedondeo: updated.reglaRedondeo
             };
             const calculations = calculateProduct(fullFormData);
-            Object.assign(updatedProduct, calculations);
+            Object.assign(updated, calculations);
           }
           
-          return updatedProduct;
+          updatedProduct = updated;
+          return updated;
         }
         return product;
       }),
@@ -248,6 +268,25 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     if (groupId) {
       try {
         await get().syncToSupabase(groupId);
+        
+        // Save price history after successful sync
+        if (updatedProduct) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.from('product_price_history').insert({
+              product_id: id,
+              user_id: user.id,
+              grupo_id: groupId,
+              precio_base: updatedProduct.precioBase,
+              web_mp: updatedProduct.webMP.precio,
+              web_transfer: updatedProduct.webTransfer.precio,
+              marketplace: updatedProduct.marketplace?.precio || null,
+              pct_ganancia: updatedProduct.pctGanancia,
+              pct_cupon: updatedProduct.pctCupon,
+              pct_mp: updatedProduct.pctMP,
+            });
+          }
+        }
       } catch (error) {
         console.error('Error syncing after update:', error);
       }

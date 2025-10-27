@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Loader2,
   Calculator,
+  History,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -31,6 +32,7 @@ import { formatCurrency, formatForCopy } from '@/utils/formatting';
 import { exportToCSV, exportToExcel, prepareExportData } from '@/utils/export';
 import { exportCompactCSV, exportCompactXLSX, prepareCompactExportData } from '@/utils/exporters';
 import { useGroup } from '@/hooks/useGroup';
+import { PriceHistoryModal } from './PriceHistoryModal';
 
 interface InlineEditState {
   productId: string;
@@ -59,6 +61,8 @@ export function ProductList({ onEditProduct }: ProductListProps = {}) {
   const isMobile = useIsMobile();
   const [inlineEdit, setInlineEdit] = useState<InlineEditState | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [selectedProductForHistory, setSelectedProductForHistory] = useState<{ id: string; name: string } | null>(null);
   
   // Estados para lazy loading
   const [displayCount, setDisplayCount] = useState(10);
@@ -408,13 +412,27 @@ export function ProductList({ onEditProduct }: ProductListProps = {}) {
                   {/* Precio Base de Referencia */}
                   <div className="mb-3 p-2 bg-muted/30 rounded-md">
                     <p className="text-muted-foreground text-xs mb-1">Precio Base de Referencia</p>
-                    <button
-                      onClick={() => handleCopyPrice(product.precioBase)}
-                      className="text-sm font-medium hover:text-primary cursor-pointer flex items-center gap-1"
-                    >
-                      {formatCurrency(product.precioBase)}
-                      <Copy className="h-3 w-3" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleCopyPrice(product.precioBase)}
+                        className="text-sm font-medium hover:text-primary cursor-pointer flex items-center gap-1"
+                      >
+                        {formatCurrency(product.precioBase)}
+                        <Copy className="h-3 w-3" />
+                      </button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedProductForHistory({ id: product.id, name: product.nombre || product.sku || 'Producto' });
+                          setHistoryModalOpen(true);
+                        }}
+                        className="h-7 px-2 text-xs gap-1"
+                      >
+                        <History className="h-3 w-3" />
+                        Historial
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Precios principales */}
@@ -659,7 +677,7 @@ export function ProductList({ onEditProduct }: ProductListProps = {}) {
                           <Skeleton className="h-8 w-full" />
                           <Skeleton className="h-8 w-full" />
                         </div>
-                      </div>
+                       </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -668,6 +686,15 @@ export function ProductList({ onEditProduct }: ProductListProps = {}) {
           </>
         )}
       </CardContent>
+      
+      {selectedProductForHistory && (
+        <PriceHistoryModal
+          open={historyModalOpen}
+          onOpenChange={setHistoryModalOpen}
+          productId={selectedProductForHistory.id}
+          productName={selectedProductForHistory.name}
+        />
+      )}
     </Card>
   );
 }

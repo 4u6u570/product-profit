@@ -88,6 +88,51 @@ export type Database = {
         }
         Relationships: []
       }
+      product_price_history: {
+        Row: {
+          created_at: string
+          grupo_id: string | null
+          id: string
+          marketplace: number | null
+          pct_cupon: number
+          pct_ganancia: number
+          pct_mp: number
+          precio_base: number
+          product_id: string
+          user_id: string
+          web_mp: number
+          web_transfer: number
+        }
+        Insert: {
+          created_at?: string
+          grupo_id?: string | null
+          id?: string
+          marketplace?: number | null
+          pct_cupon: number
+          pct_ganancia: number
+          pct_mp: number
+          precio_base: number
+          product_id: string
+          user_id: string
+          web_mp: number
+          web_transfer: number
+        }
+        Update: {
+          created_at?: string
+          grupo_id?: string | null
+          id?: string
+          marketplace?: number | null
+          pct_cupon?: number
+          pct_ganancia?: number
+          pct_mp?: number
+          precio_base?: number
+          product_id?: string
+          user_id?: string
+          web_mp?: number
+          web_transfer?: number
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           cantidad_por_caja: number
