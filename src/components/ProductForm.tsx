@@ -256,13 +256,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               min="1"
               className="h-12 md:h-10 text-base md:text-sm"
               {...form.register('cantidadPorCaja', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 1) {
-                    form.setValue('cantidadPorCaja', 1);
-                  }
-                }
+                valueAsNumber: true
               })}
             />
           </div>
@@ -287,13 +281,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               placeholder="30300.00"
               className="h-12 md:h-10 text-base md:text-sm"
               {...form.register('precioBase', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 0) {
-                    form.setValue('precioBase', 0);
-                  }
-                }
+                valueAsNumber: true
               })}
             />
             <p className="text-xs text-muted-foreground mt-1">Ej.: 30300.00 (usa punto para decimales)</p>
@@ -306,13 +294,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               step="0.01"
               className="h-12 md:h-10 text-base md:text-sm"
               {...form.register('fleteTotal', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 0) {
-                    form.setValue('fleteTotal', 0);
-                  }
-                }
+                valueAsNumber: true
               })}
             />
           </div>
@@ -443,13 +425,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
                   placeholder="2500"
                   className="h-12 md:h-10 text-base md:text-sm"
                   {...form.register('costoEnvioUnitario', { 
-                    valueAsNumber: true,
-                    onChange: (e) => {
-                      const value = parseFloat(e.target.value);
-                      if (isNaN(value) || value < 0) {
-                        form.setValue('costoEnvioUnitario', 0);
-                      }
-                    }
+                    valueAsNumber: true
                   })}
                 />
                 <p className="text-xs text-muted-foreground mt-1">Monto que se suma al costo unitario</p>
@@ -469,13 +445,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               placeholder="10, 25, 100"
               className="bg-background text-foreground"
               {...form.register('pctGanancia', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 0) {
-                    form.setValue('pctGanancia', 0);
-                  }
-                }
+                valueAsNumber: true
               })}
             />
           </div>
@@ -486,13 +456,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               type="number"
               step="0.01"
               {...form.register('pctMP', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 0) {
-                    form.setValue('pctMP', 0);
-                  }
-                }
+                valueAsNumber: true
               })}
             />
           </div>
@@ -503,13 +467,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               type="number"
               step="0.01"
               {...form.register('pctCupon', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 0) {
-                    form.setValue('pctCupon', 0);
-                  }
-                }
+                valueAsNumber: true
               })}
             />
           </div>
@@ -531,13 +489,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
                 placeholder="% CL"
                 className="mt-2"
                 {...form.register('pctCL', { 
-                  valueAsNumber: true,
-                  onChange: (e) => {
-                    const value = parseFloat(e.target.value);
-                    if (isNaN(value) || value < 0) {
-                      form.setValue('pctCL', 0);
-                    }
-                  }
+                  valueAsNumber: true
                 })}
               />
             ) : (
@@ -547,13 +499,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
                 placeholder="Monto fijo"
                 className="mt-2"
                 {...form.register('clFijo', { 
-                  valueAsNumber: true,
-                  onChange: (e) => {
-                    const value = parseFloat(e.target.value);
-                    if (isNaN(value) || value < 0) {
-                      form.setValue('clFijo', 0);
-                    }
-                  }
+                  valueAsNumber: true
                 })}
               />
             )}
@@ -570,13 +516,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               step="0.01"
               placeholder="21 (personalizable)"
               {...form.register('pctIVA', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 0) {
-                    form.setValue('pctIVA', 0);
-                  }
-                }
+                valueAsNumber: true
               })}
             />
           </div>
@@ -587,13 +527,7 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               type="number"
               step="0.01"
               {...form.register('pctDescTransfer', { 
-                valueAsNumber: true,
-                onChange: (e) => {
-                  const value = parseFloat(e.target.value);
-                  if (isNaN(value) || value < 0) {
-                    form.setValue('pctDescTransfer', 0);
-                  }
-                }
+                valueAsNumber: true
               })}
             />
           </div>

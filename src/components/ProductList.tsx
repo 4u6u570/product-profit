@@ -148,7 +148,7 @@ export function ProductList({ onEditProduct }: ProductListProps = {}) {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteProduct(id);
+      await deleteProduct(id, groupId);
       toast({
         title: 'Producto eliminado',
         description: 'El producto se ha eliminado correctamente'

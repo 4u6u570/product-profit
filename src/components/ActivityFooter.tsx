@@ -109,7 +109,7 @@ export const ActivityFooter = () => {
   }
 
   return (
-    <footer className="border-t bg-gradient-to-r from-background via-muted/20 to-background py-3 px-4">
+    <footer className="sticky bottom-0 border-t bg-gradient-to-r from-background via-muted/40 to-background py-3 px-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
       <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Activity className="h-4 w-4" />
