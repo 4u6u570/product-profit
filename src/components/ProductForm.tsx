@@ -114,20 +114,46 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
     }
   }, [productToEdit, form]);
 
-  const watchedValues = form.watch();
+  const normalizeFormData = (raw: any): ProductFormData => {
+    const num = (v: any, fallback = 0) => {
+      if (typeof v === 'number' && !Number.isNaN(v)) return v;
+      if (v === '' || v === null || v === undefined) return fallback;
+      const parsed = Number(v);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    return {
+      ...raw,
+      cantidadPorCaja: num(raw.cantidadPorCaja, 1),
+      precioBase: num(raw.precioBase, 0),
+      fleteTotal: num(raw.fleteTotal, 0),
+      costoEnvioUnitario: raw.costoEnvioUnitario === undefined ? undefined : num(raw.costoEnvioUnitario, 0),
+      pctGanancia: num(raw.pctGanancia, 0),
+      pctMP: num(raw.pctMP, 0),
+      pctCupon: num(raw.pctCupon, 0),
+      pctCL: raw.pctCL === undefined ? undefined : num(raw.pctCL, 0),
+      clFijo: raw.clFijo === undefined ? undefined : num(raw.clFijo, 0),
+      pctIVA: raw.pctIVA === undefined ? undefined : num(raw.pctIVA, 0),
+      pctDescTransfer: num(raw.pctDescTransfer, 0),
+      preciosIndividuales: (raw.preciosIndividuales || []).map((v: any) => num(v, 0)),
+    };
+  };
+
+  const rawWatchedValues = form.watch();
+  const watchedValues = normalizeFormData(rawWatchedValues);
 
   // Calcular vista previa en tiempo real
   useEffect(() => {
     const error = validateProductData(watchedValues);
     setValidationError(error);
-    
+
     if (!error) {
       const calculation = calculateProduct(watchedValues);
       setPreview(calculation);
     } else {
       setPreview(null);
     }
-  }, [watchedValues]);
+  }, [rawWatchedValues]);
 
   const [showAdvancedPreview, setShowAdvancedPreview] = useState(false);
 
@@ -255,8 +281,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               type="number"
               min="1"
               className="h-12 md:h-10 text-base md:text-sm"
-              {...form.register('cantidadPorCaja', { 
-                valueAsNumber: true
+              {...form.register('cantidadPorCaja', {
+                setValueAs: (v) => (v === '' ? undefined : Number(v)),
               })}
             />
           </div>
@@ -280,8 +306,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               step="0.01"
               placeholder="30300.00"
               className="h-12 md:h-10 text-base md:text-sm"
-              {...form.register('precioBase', { 
-                valueAsNumber: true
+              {...form.register('precioBase', {
+                setValueAs: (v) => (v === '' ? undefined : Number(v)),
               })}
             />
             <p className="text-xs text-muted-foreground mt-1">Ej.: 30300.00 (usa punto para decimales)</p>
@@ -293,8 +319,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               type="number"
               step="0.01"
               className="h-12 md:h-10 text-base md:text-sm"
-              {...form.register('fleteTotal', { 
-                valueAsNumber: true
+              {...form.register('fleteTotal', {
+                setValueAs: (v) => (v === '' ? undefined : Number(v)),
               })}
             />
           </div>
@@ -424,8 +450,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
                   step="0.01"
                   placeholder="2500"
                   className="h-12 md:h-10 text-base md:text-sm"
-                  {...form.register('costoEnvioUnitario', { 
-                    valueAsNumber: true
+                  {...form.register('costoEnvioUnitario', {
+                    setValueAs: (v) => (v === '' ? undefined : Number(v)),
                   })}
                 />
                 <p className="text-xs text-muted-foreground mt-1">Monto que se suma al costo unitario</p>
@@ -444,8 +470,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               step="0.1"
               placeholder="10, 25, 100"
               className="bg-background text-foreground"
-              {...form.register('pctGanancia', { 
-                valueAsNumber: true
+              {...form.register('pctGanancia', {
+                setValueAs: (v) => (v === '' ? undefined : Number(v)),
               })}
             />
           </div>
@@ -455,8 +481,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               id="pctMP"
               type="number"
               step="0.01"
-              {...form.register('pctMP', { 
-                valueAsNumber: true
+              {...form.register('pctMP', {
+                setValueAs: (v) => (v === '' ? undefined : Number(v)),
               })}
             />
           </div>
@@ -466,8 +492,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               id="pctCupon"
               type="number"
               step="0.01"
-              {...form.register('pctCupon', { 
-                valueAsNumber: true
+              {...form.register('pctCupon', {
+                setValueAs: (v) => (v === '' ? undefined : Number(v)),
               })}
             />
           </div>
@@ -488,8 +514,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
                 step="0.01"
                 placeholder="% CL"
                 className="mt-2"
-                {...form.register('pctCL', { 
-                  valueAsNumber: true
+                {...form.register('pctCL', {
+                  setValueAs: (v) => (v === '' ? undefined : Number(v)),
                 })}
               />
             ) : (
@@ -498,8 +524,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
                 step="0.01"
                 placeholder="Monto fijo"
                 className="mt-2"
-                {...form.register('clFijo', { 
-                  valueAsNumber: true
+                {...form.register('clFijo', {
+                  setValueAs: (v) => (v === '' ? undefined : Number(v)),
                 })}
               />
             )}
@@ -515,8 +541,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               type="number"
               step="0.01"
               placeholder="21 (personalizable)"
-              {...form.register('pctIVA', { 
-                valueAsNumber: true
+              {...form.register('pctIVA', {
+                setValueAs: (v) => (v === '' ? undefined : Number(v)),
               })}
             />
           </div>
@@ -526,8 +552,8 @@ export function ProductForm({ productToEdit, onEditComplete }: ProductFormProps 
               id="pctDescTransfer"
               type="number"
               step="0.01"
-              {...form.register('pctDescTransfer', { 
-                valueAsNumber: true
+              {...form.register('pctDescTransfer', {
+                setValueAs: (v) => (v === '' ? undefined : Number(v)),
               })}
             />
           </div>
