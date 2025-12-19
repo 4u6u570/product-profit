@@ -20,7 +20,7 @@ interface ProductStore {
   loadProducts: (groupId: string) => Promise<void>;
   addProduct: (formData: ProductFormData, groupId: string) => Promise<void>;
   updateProduct: (id: string, formData: Partial<ProductFormData>, groupId?: string) => Promise<void>;
-  deleteProduct: (id: string) => Promise<void>;
+  deleteProduct: (id: string, groupId?: string) => Promise<void>;
   togglePin: (id: string) => void;
   toggleSelect: (id: string) => void;
   selectAll: () => void;
@@ -322,7 +322,7 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     }
   },
 
-  deleteProduct: async (id: string) => {
+  deleteProduct: async (id: string, groupId?: string) => {
     set(state => ({
       products: state.products.filter(p => p.id !== id),
       unsyncedQueue: [
@@ -332,6 +332,15 @@ export const useProductStore = create<ProductStore>((set, get) => ({
     }));
 
     get().saveToLocalStorage();
+
+    // Sync to Supabase immediately if groupId is provided
+    if (groupId) {
+      try {
+        await get().syncToSupabase(groupId);
+      } catch (error) {
+        console.error('Error syncing delete to Supabase:', error);
+      }
+    }
   },
 
   togglePin: (id: string) => {
