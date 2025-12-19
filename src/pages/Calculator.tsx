@@ -35,10 +35,10 @@ export default function CalculatorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/50 p-4 overflow-x-hidden">
-      <div className="max-w-7xl mx-auto space-y-6 w-full">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-background via-muted/30 to-secondary/50 p-4 overflow-hidden">
+      <div className="max-w-7xl mx-auto flex flex-col flex-1 w-full min-h-0">
         {/* Header */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center justify-between gap-4 flex-wrap flex-shrink-0 mb-4 lg:mb-6">
           <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
             <Calculator className="h-6 w-6 md:h-8 md:w-8 text-primary flex-shrink-0" />
             <h1 className="text-xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent truncate">
@@ -59,9 +59,9 @@ export default function CalculatorPage() {
         </div>
 
         {/* Layout Principal */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 flex-1 min-h-0 overflow-hidden lg:overflow-visible">
           {/* Panel Izquierdo - Formulario */}
-          <div className="space-y-4 lg:space-y-6">
+          <div className="overflow-y-auto lg:overflow-y-auto min-h-0">
             <ProductForm 
               productToEdit={productToEdit} 
               onEditComplete={handleEditComplete}
@@ -69,7 +69,7 @@ export default function CalculatorPage() {
           </div>
 
           {/* Panel Derecho - Lista */}
-          <div className="space-y-4 lg:space-y-6">
+          <div className="overflow-y-auto lg:overflow-y-auto min-h-0">
             <ProductList onEditProduct={handleEditProduct} />
           </div>
         </div>
