@@ -62,18 +62,26 @@ export function calculateProduct(data: ProductFormData): ProductCalculationResul
   let precioWebMPBruto: number;
 
   if (data.modoProducto === 'propio') {
-    // PRODUCTO PROPIO: aplicar gross-up combinado sobre MP + Cupón + CL
-    const comisionCLPorcentaje = data.clTipo === 'porcentaje' 
-      ? (data.pctCL || 0)
-      : (data.clFijo || 0) / subtotal * 100;
-    
-    const comisionesTotales = (data.pctMP + data.pctCupon + comisionCLPorcentaje) / 100;
-    
-    if (comisionesTotales >= 1) {
-      // Prevenir división por cero
-      precioWebMPBruto = subtotal * 2;
+    if (data.clTipo === 'fijo') {
+      // PRODUCTO PROPIO con CL FIJO: sumar CL al subtotal antes del gross-up
+      // Fórmula: precio = (subtotal + clFijo) / (1 - pctMP - pctCupon)
+      const subtotalConCL = subtotal + (data.clFijo || 0);
+      const comisionesMPCupon = (data.pctMP + data.pctCupon) / 100;
+      
+      if (comisionesMPCupon >= 1) {
+        precioWebMPBruto = subtotalConCL * 2;
+      } else {
+        precioWebMPBruto = subtotalConCL / (1 - comisionesMPCupon);
+      }
     } else {
-      precioWebMPBruto = subtotal / (1 - comisionesTotales);
+      // PRODUCTO PROPIO con CL PORCENTAJE: gross-up combinado
+      const comisionesTotales = (data.pctMP + data.pctCupon + (data.pctCL || 0)) / 100;
+      
+      if (comisionesTotales >= 1) {
+        precioWebMPBruto = subtotal * 2;
+      } else {
+        precioWebMPBruto = subtotal / (1 - comisionesTotales);
+      }
     }
   } else {
     // PRODUCTO DE TERCERO: gross-up combinado sobre MP + Cupón, luego sumar CL
